@@ -1,3 +1,4 @@
 .history/
 data.py
 secrets.json
+spotify_cookies*.*

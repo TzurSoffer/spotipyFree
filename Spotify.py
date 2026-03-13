@@ -1,5 +1,7 @@
 import json
+import os
 import time
+from pathlib import Path
 
 from selenium import webdriver
 from selenium.webdriver.common.by import By
@@ -99,6 +101,8 @@ class Spotify(SpotifyTemplate):
     def __init__(self, username, password, stealth=True, *args, **kwargs):
         self.username = username
         self.password = password
+        self._cookie_file = f"spotify_cookies_{self.username}.json"
+
         opts = Options()
         if stealth:
             opts.add_argument("--headless=new")
@@ -112,7 +116,18 @@ class Spotify(SpotifyTemplate):
 
 
         self.driver = webdriver.Chrome(options=opts)
-        self._login()
+
+        # Attempt to restore an existing session using stored cookies
+        self.driver.get("https://open.spotify.com")
+        self._load_cookies()
+        if  self._is_logged_in():
+            print("Restored session from saved cookies.")
+        else:
+            print("Invalid cookies, logging in.")
+            if self._login():
+                print("Saving new cookies")
+                self._save_cookies()
+
         self._removeUnneededWindow()
     
     def _clickButtonByText(self, text):
@@ -162,7 +177,7 @@ class Spotify(SpotifyTemplate):
             box = self._findClickableByMod("data-testid", "login-username", "input")
 
             box.clear()
-            box.send_keys(username)
+            box.send_keys(self.username)
             box.send_keys(Keys.ENTER)
 
             # find log in with password button
@@ -176,13 +191,57 @@ class Spotify(SpotifyTemplate):
             box = self._findClickableByMod("data-testid", "login-password", "input")
 
             box.clear()
-            box.send_keys(password)
+            box.send_keys(self.password)
             box.send_keys(Keys.ENTER)
 
             self._findClickableByMod("data-testid", "web-player-link", "button").click()
-            return(True)
+            return True
         except:
+            return False
+
+    def _cookies_path(self) -> Path:
+        return Path(__file__).resolve().parent / self._cookie_file
+
+    def _load_cookies(self) -> bool:
+        path = self._cookies_path()
+        if not path.exists():
+            return False
+
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                cookies = json.load(f)
+
+            for cookie in cookies:
+                cookie = {k: v for k, v in cookie.items() if k not in ("sameSite",)}
+                try:
+                    self.driver.add_cookie(cookie)
+                except Exception:
+                    continue
+
+            self.driver.refresh()
+            return True
+        except Exception:
+            return False
+
+    def _save_cookies(self) -> bool:
+        try:
+            cookies = self.driver.get_cookies()
+            path = self._cookies_path()
+            with open(path, "w", encoding="utf-8") as f:
+                json.dump(cookies, f, indent=2)
+            return True
+        except Exception:
+            return False
+
+    def _is_logged_in(self) -> bool:
+        try:
+            url = self.driver.current_url
+            if "accounts.spotify.com" in url and "_authfailed=1" in url:
+                return(False)
+            self._findClickableByMod("data-testid", "login-button", "button", timeout=2)
             return(False)
+        except:
+            return(True)
 
     def _removeUnneededWindow(self) -> bool:
         """ remove main page (contains links to playlists that we dont want to find) """
