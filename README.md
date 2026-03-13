@@ -10,7 +10,9 @@ Currently the library focuses on **retrieving the current playback state** in a 
 
 ## Features
 
-*   Drop-in style response compatible with `spotipy.current_playback()`
+*   Drop-in style response compatible with `spotipy`
+
+*   Cookie saving for faster loading times
     
 *   No Spotify developer account required
     
@@ -32,17 +34,15 @@ Currently implemented:
 *   `current_playback()`  
     Returns playback information similar to the Spotify Web API.
     
-
+*   `current_user_playlists`
+    Returns information about playlists the user has saved.
 Limitations:
 
-*   Only the **currently playing track** is supported
+*   Only the **currently playing track** and **current_user_playlists** is supported
     
 *   Some page loads rely on DOM scraping and may break if Spotify updates their UI
     
 *   Occasionally **Spotify CAPTCHA** may appear during login
-    
-*   Performance is slower than the official API due to browser automation
-    
 
 - - -
 
@@ -129,8 +129,6 @@ JSON
 - - -
 
 ## Planned Improvements
-
-*   Cookie-based login (avoid CAPTCHA and login delays)
     
 *   Faster page scraping
     
@@ -145,9 +143,6 @@ JSON
     *   `next / previous`
         
 *   Headless mode improvements
-    
-*   Session persistence
-    
 
 - - -
 
