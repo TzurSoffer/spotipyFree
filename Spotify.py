@@ -1,5 +1,4 @@
 import json
-import os
 import time
 from pathlib import Path
 
@@ -101,7 +100,7 @@ class Spotify(SpotifyTemplate):
     def __init__(self, username, password, stealth=True, *args, **kwargs):
         self.username = username
         self.password = password
-        self._cookie_file = f"spotify_cookies_{self.username}.json"
+        self._cookieFile = f"spotify_cookies_{self.username}.json"
 
         opts = Options()
         if stealth:
@@ -119,14 +118,14 @@ class Spotify(SpotifyTemplate):
 
         # Attempt to restore an existing session using stored cookies
         self.driver.get("https://open.spotify.com")
-        self._load_cookies()
-        if  self._is_logged_in():
+        self._loadCookies()
+        if  self._isLoggedIn():
             print("Restored session from saved cookies.")
         else:
             print("Invalid cookies, logging in.")
             if self._login():
                 print("Saving new cookies")
-                self._save_cookies()
+                self._saveCookies()
 
         self._removeUnneededWindow()
     
@@ -195,17 +194,17 @@ class Spotify(SpotifyTemplate):
             box.send_keys(Keys.ENTER)
 
             self._findClickableByMod("data-testid", "web-player-link", "button").click()
-            return True
+            return(True)
         except:
-            return False
+            return(False)
 
-    def _cookies_path(self) -> Path:
-        return Path(__file__).resolve().parent / self._cookie_file
+    def _cookiesPath(self) -> Path:
+        return(Path(__file__).resolve().parent / self._cookieFile)
 
-    def _load_cookies(self) -> bool:
-        path = self._cookies_path()
+    def _loadCookies(self) -> bool:
+        path = self._cookiesPath()
         if not path.exists():
-            return False
+            return(False)
 
         try:
             with open(path, "r", encoding="utf-8") as f:
@@ -219,21 +218,21 @@ class Spotify(SpotifyTemplate):
                     continue
 
             self.driver.refresh()
-            return True
+            return(True)
         except Exception:
-            return False
+            return(False)
 
-    def _save_cookies(self) -> bool:
+    def _saveCookies(self) -> bool:
         try:
             cookies = self.driver.get_cookies()
-            path = self._cookies_path()
+            path = self._cookiesPath()
             with open(path, "w", encoding="utf-8") as f:
                 json.dump(cookies, f, indent=2)
-            return True
+            return(True)
         except Exception:
-            return False
+            return(False)
 
-    def _is_logged_in(self) -> bool:
+    def _isLoggedIn(self) -> bool:
         try:
             url = self.driver.current_url
             if "accounts.spotify.com" in url and "_authfailed=1" in url:
@@ -260,17 +259,6 @@ class Spotify(SpotifyTemplate):
             return(True)
         except:
             return(False)
-
-    def current_playback(self):
-        trackInfo = self.getCurrentTrackData()
-        return(super().current_playback(
-            SongID=trackInfo["trackUrl"],
-            songName=trackInfo["trackName"],
-            PlaylistId=trackInfo["albumId"],
-            ArtistId=trackInfo["artistId"],
-            artistsName=trackInfo["artistName"],
-            AlbumID=trackInfo["trackId"]
-        ))
 
     def getCurrentTrackData(self):
         self.driver.get("https://open.spotify.com/queue")
@@ -327,6 +315,18 @@ class Spotify(SpotifyTemplate):
             "trackId": trackId
         }
 
+    def current_playback(self):
+        trackInfo = self.getCurrentTrackData()
+        return(super().current_playback(
+            SongID=trackInfo["trackUrl"],
+            songName=trackInfo["trackName"],
+            PlaylistId=trackInfo["albumId"],
+            ArtistId=trackInfo["artistId"],
+            artistsName=trackInfo["artistName"],
+            AlbumID=trackInfo["trackId"]
+        ))
+
+
 if __name__ == "__main__":
     with open("secrets.json") as f:
         secrets = json.load(f)
@@ -335,6 +335,7 @@ if __name__ == "__main__":
 
     sp = Spotify(username, password, stealth=False)
     driver = sp.driver
+    self = sp            #< enables copy pasting from class to pysole
 
     try:
         import pysole
