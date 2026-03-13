@@ -10,7 +10,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.chrome.options import Options
 
 class SpotifyTemplate:
-    def current_playback(self, SongID="", songName="", PlaylistId="", ArtistId="", artistsName="", AlbumID=""):
+    def current_playback(self, SongID="", songName="", playlistId="", ownerID="", artistsName="", AlbumID=""):
         return({'device': {
             'id': '',
             'is_active': False,
@@ -27,10 +27,10 @@ class SpotifyTemplate:
             'timestamp': 0,
             'context': {
                 'external_urls': {
-                    'spotify': f'https://open.spotify.com/playlist/{PlaylistId}'},
-                    'href': f'https://api.spotify.com/v1/playlists/{PlaylistId}',
+                    'spotify': f'https://open.spotify.com/playlist/{playlistId}'},
+                    'href': f'https://api.spotify.com/v1/playlists/{playlistId}',
                     'type': 'playlist',
-                    'uri': f'spotify:playlist:{PlaylistId}'
+                    'uri': f'spotify:playlist:{playlistId}'
                     },
                     'progress_ms': 154329,
                     'item': {
@@ -38,12 +38,12 @@ class SpotifyTemplate:
                             'album_type': 'compilation',
                             'artists': [
                                 {'external_urls': {
-                                    'spotify': f'https://open.spotify.com/artist/{ArtistId}'},
-                                    'href': f'https://api.spotify.com/v1/artists/{ArtistId}',
-                                    'id': ArtistId,
+                                    'spotify': f'https://open.spotify.com/artist/{ownerID}'},
+                                    'href': f'https://api.spotify.com/v1/artists/{ownerID}',
+                                    'id': ownerID,
                                     'name': artistsName,
                                     'type': 'artist',
-                                    'uri': f'spotify:artist:{ArtistId}'
+                                    'uri': f'spotify:artist:{ownerID}'
                                     }
                                     ],
                                     'available_markets': ['AR', 'AU', 'AT', 'BE', 'BO', 'BR', 'BG', 'CA', 'CL', 'CO', 'CR', 'CY', 'CZ', 'DK', 'DO', 'DE', 'EC', 'EE', 'SV', 'FI', 'FR', 'GR', 'GT', 'HN', 'HK', 'HU', 'IS', 'IE', 'IT', 'LV', 'LT', 'LU', 'MY', 'MT', 'MX', 'NL', 'NZ', 'NI', 'NO', 'PA', 'PY', 'PE', 'PH', 'PL', 'PT', 'SG', 'SK', 'ES', 'SE', 'CH', 'TW', 'TR', 'UY', 'US', 'GB', 'AD', 'LI', 'MC', 'ID', 'JP', 'TH', 'VN', 'RO', 'IL', 'ZA', 'SA', 'AE', 'BH', 'QA', 'OM', 'KW', 'EG', 'MA', 'DZ', 'TN', 'LB', 'JO', 'PS', 'IN', 'BY', 'KZ', 'MD', 'UA', 'AL', 'BA', 'HR', 'ME', 'MK', 'RS', 'SI', 'KR', 'BD', 'PK', 'LK', 'GH', 'KE', 'NG', 'TZ', 'UG', 'AG', 'AM', 'BS', 'BB', 'BZ', 'BT', 'BW', 'BF', 'CV', 'CW', 'DM', 'FJ', 'GM', 'GE', 'GD', 'GW', 'GY', 'HT', 'JM', 'KI', 'LS', 'LR', 'MW', 'MV', 'ML', 'MH', 'FM', 'NA', 'NR', 'NE', 'PW', 'PG', 'WS', 'SM', 'ST', 'SN', 'SC', 'SL', 'SB', 'KN', 'LC', 'VC', 'SR', 'TL', 'TO', 'TT', 'TV', 'VU', 'AZ', 'BN', 'BI', 'KH', 'CM', 'TD', 'KM', 'GQ', 'SZ', 'GA', 'GN', 'KG', 'LA', 'MO', 'MR', 'MN', 'NP', 'RW', 'TG', 'UZ', 'ZW', 'BJ', 'MG', 'MU', 'MZ', 'AO', 'CI', 'DJ', 'ZM', 'CD', 'CG', 'IQ', 'LY', 'TJ', 'VE', 'ET', 'XK'],
@@ -70,12 +70,12 @@ class SpotifyTemplate:
                                             'artists': [
                                                 {
                                                     'external_urls': {
-                                                        'spotify': 'https://open.spotify.com/artist/ArtistId'},
-                                                        'href': 'https://api.spotify.com/v1/artists/ArtistId',
-                                                        'id': ArtistId,
+                                                        'spotify': 'https://open.spotify.com/artist/ownerID'},
+                                                        'href': 'https://api.spotify.com/v1/artists/ownerID',
+                                                        'id': ownerID,
                                                         'name': artistsName,
                                                         'type': 'artist',
-                                                        'uri': f'spotify:artist:{ArtistId}'}],
+                                                        'uri': f'spotify:artist:{ownerID}'}],
                                                         'available_markets': ['AR', 'AU', 'AT', 'BE', 'BO', 'BR', 'BG', 'CA', 'CL', 'CO', 'CR', 'CY', 'CZ', 'DK', 'DO', 'DE', 'EC', 'EE', 'SV', 'FI', 'FR', 'GR', 'GT', 'HN', 'HK', 'HU', 'IS', 'IE', 'IT', 'LV', 'LT', 'LU', 'MY', 'MT', 'MX', 'NL', 'NZ', 'NI', 'NO', 'PA', 'PY', 'PE', 'PH', 'PL', 'PT', 'SG', 'SK', 'ES', 'SE', 'CH', 'TW', 'TR', 'UY', 'US', 'GB', 'AD', 'LI', 'MC', 'ID', 'JP', 'TH', 'VN', 'RO', 'IL', 'ZA', 'SA', 'AE', 'BH', 'QA', 'OM', 'KW', 'EG', 'MA', 'DZ', 'TN', 'LB', 'JO', 'PS', 'IN', 'BY', 'KZ', 'MD', 'UA', 'AL', 'BA', 'HR', 'ME', 'MK', 'RS', 'SI', 'KR', 'BD', 'PK', 'LK', 'GH', 'KE', 'NG', 'TZ', 'UG', 'AG', 'AM', 'BS', 'BB', 'BZ', 'BT', 'BW', 'BF', 'CV', 'CW', 'DM', 'FJ', 'GM', 'GE', 'GD', 'GW', 'GY', 'HT', 'JM', 'KI', 'LS', 'LR', 'MW', 'MV', 'ML', 'MH', 'FM', 'NA', 'NR', 'NE', 'PW', 'PG', 'WS', 'SM', 'ST', 'SN', 'SC', 'SL', 'SB', 'KN', 'LC', 'VC', 'SR', 'TL', 'TO', 'TT', 'TV', 'VU', 'AZ', 'BN', 'BI', 'KH', 'CM', 'TD', 'KM', 'GQ', 'SZ', 'GA', 'GN', 'KG', 'LA', 'MO', 'MR', 'MN', 'NP', 'RW', 'TG', 'UZ', 'ZW', 'BJ', 'MG', 'MU', 'MZ', 'AO', 'CI', 'DJ', 'ZM', 'CD', 'CG', 'IQ', 'LY', 'TJ', 'VE', 'ET', 'XK'],
                                                         'disc_number': 2,
                                                         'duration_ms': 162733,
@@ -94,6 +94,55 @@ class SpotifyTemplate:
                                                             'uri': f'spotify:track:{SongID}'},
                                                             'currently_playing_type': 'track',
                                                             'actions': {'disallows': {'resuming': True}}
+        })
+
+    def playlist(self, playlistId="", playlistName="", songCount=-1, ownerName="", ownerID="", description=""):
+        return({
+            "collaborative": False,
+            "description": description,
+            "external_urls": {
+                'spotify': f'https://open.spotify.com/playlist/{playlistId}'
+            },
+            'href': f'https://api.spotify.com/v1/playlists/{playlistId}',
+            "id": playlistId,
+            "images": [
+                {
+                    "height": 640,
+                    "url": "playlist image link",
+                    "width": 640
+                }
+            ],
+            "name": playlistName,
+            "owner": {
+                "display_name": ownerName,
+                "external_urls": {
+                    'spotify': f'https://open.spotify.com/artist/{ownerID}'
+                },
+                'href': f'https://api.spotify.com/v1/artists/{ownerID}',
+                "id": ownerID,
+                "type": "user",
+                "uri": f"spotify:user:{ownerID}"
+            },
+            "primary_color": None,
+            "public": True,
+            "snapshot_id": "",
+            "tracks": {
+                "href": f'https://api.spotify.com/v1/playlists/{playlistId}',
+                "total": songCount
+            },
+            "type": "playlist",
+            "uri": ""
+        })
+
+    def current_user_playlists(self, playlists=[]):
+        return({
+            "href": "playlist API link",
+            "limit": -1,
+            "next": None,
+            "offset": 0,
+            "previous": None,
+            "total": len(playlists),
+            "items": playlists
         })
 
 class Spotify(SpotifyTemplate):
@@ -144,31 +193,52 @@ class Spotify(SpotifyTemplate):
         ))
 
     def _getPlaylists(self) -> dict:
-        rows = self.driver.find_elements(
+        total = {}
+        count = 0
+
+        panel = self.driver.find_element(
             By.CSS_SELECTOR,
-            'div[data-encore-id="listRow"][role="group"]'
+            "div[data-overlayscrollbars-viewport]"
         )
 
-        playlists = {}
+        while True:
+            rows = self.driver.find_elements(
+                By.CSS_SELECTOR,
+                'div[data-encore-id="listRow"][role="group"]'
+            )
 
-        for row in rows:
-            try:
-                titleElement= row.find_element(By.CSS_SELECTOR, '[data-encore-id="listRowTitle"]')
-                name = titleElement.text.strip()
+            for r in rows:
+                try:
+                    aria = r.get_attribute("aria-labelledby")
+                    if not aria or not aria.startswith("listrow-title-spotify:playlist:"):
+                        continue
 
-                aria = row.get_attribute("aria-labelledby")
-                if "spotify:playlist:" not in aria:
+                    name = r.find_element(By.ID, aria).text
+                    owner = r.find_element(By.CLASS_NAME, "t2qx66PtSUA0l8Eh").text.split(" • ")[-1]
+
+                    total[name] = super().playlist(
+                        playlistId=aria[31:],
+                        playlistName=name,
+                        songCount=-1,
+                        ownerName=owner,
+                        ownerID="",
+                        description=""
+                    )
+                except Exception:
                     continue
-                playlistId = aria.split("spotify:playlist:")[-1]
 
-                url = f"https://open.spotify.com/playlist/{playlistId}"
+            if len(total) == count:
+                return total
 
-                playlists[name] = url
-            except:
-                continue
+            count = len(total)
 
-        return(playlists)
-    
+            self.driver.execute_script(
+                "arguments[0].scrollTop = arguments[0].scrollTop + arguments[1];",
+                panel,
+                1500
+            )
+
+
     def _login(self) -> bool:
         try:
             self.driver.get("https://accounts.spotify.com/en/login")
@@ -298,11 +368,11 @@ class Spotify(SpotifyTemplate):
 
         # Artist link
         artistLink = menu.find_element(By.XPATH, ".//a[contains(@href, '/artist/')]").get_attribute("href")
-        artistId = artistLink.split("artist/")
-        if len(artistId) > 1:
-            artistId = artistId[1]
+        ownerID = artistLink.split("artist/")
+        if len(ownerID) > 1:
+            ownerID = ownerID[1]
         else:
-            artistId = None
+            ownerID = None
 
         return {
             "trackName": songName,
@@ -310,7 +380,7 @@ class Spotify(SpotifyTemplate):
             "albumUrl": albumLink,
             "albumId": albumId,
             "artistUrl": artistLink,
-            "artistId": artistId,
+            "ownerID": ownerID,
             "artistName": artistName,
             "trackId": trackId
         }
@@ -320,12 +390,18 @@ class Spotify(SpotifyTemplate):
         return(super().current_playback(
             SongID=trackInfo["trackUrl"],
             songName=trackInfo["trackName"],
-            PlaylistId=trackInfo["albumId"],
-            ArtistId=trackInfo["artistId"],
+            playlistId=trackInfo["albumId"],
+            ownerID=trackInfo["ownerID"],
             artistsName=trackInfo["artistName"],
             AlbumID=trackInfo["trackId"]
         ))
+        
+    def playlistData(self, id):
+        pass
 
+    def current_user_playlists(self):
+        playlists = self._getPlaylists().items()
+        return(super().current_user_playlists(playlists))
 
 if __name__ == "__main__":
     with open("secrets.json") as f:
