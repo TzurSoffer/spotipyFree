@@ -3,3 +3,4 @@ data.py
 Spotify_myScraper.py
 secrets.json
 spotify_cookies*.*
+*.egg-info
