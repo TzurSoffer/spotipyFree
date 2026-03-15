@@ -1,6 +1,6 @@
 [project]
 name = "spotipyFree"
-version = "1.0.0"
+version = "1.0.2"
 description = "A Spotipy-compatible wrapper using SpotAPI"
 readme = "README.md"
 requires-python = ">=3.9"

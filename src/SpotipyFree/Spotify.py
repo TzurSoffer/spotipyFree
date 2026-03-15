@@ -6,7 +6,7 @@ class Genre():
     def title(self, *args, **kwargs):
         return(self.name)
 
-class SpotifyClient:
+class Spotify:
     """
     Wrapper that makes SpotAPI behave like Spotipy.
     Only implements commonly used methods but can be expanded.
@@ -248,7 +248,7 @@ class SpotifyClient:
         return
 
 if __name__ == "__main__":
-    sp = SpotifyClient()
+    sp = Spotify()
     try:
         import pysole
     except:
