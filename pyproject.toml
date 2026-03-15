@@ -1,12 +1,15 @@
 [project]
 name = "spotipyFree"
-version = "0.1.0"
+version = "1.0.0"
 description = "A Spotipy-compatible wrapper using SpotAPI"
-requires-python = ">=3.8"
+readme = "README.md"
+requires-python = ">=3.9"
+license = { file = "LICENSE" }
+authors = [{ name = "Tzur" }]
 dependencies = ["spotapi"]
 
 [build-system]
-requires = ["setuptools"]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]

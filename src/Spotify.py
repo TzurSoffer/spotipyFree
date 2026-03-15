@@ -249,8 +249,13 @@ class SpotifyClient:
 
 if __name__ == "__main__":
     sp = SpotifyClient()
-    import pysole
-    pysole.probe(runRemainingCode=True, printStartupCode=True)
+    try:
+        import pysole
+    except:
+        pysole = None
+        print("To get an interactive console, do pip install liveConsole")
+    if pysole:
+        pysole.probe(runRemainingCode=True, printStartupCode=True)
     playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
     track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
     album = sp.album("4m2880jivSbbyEGAKfITCa")

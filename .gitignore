@@ -4,3 +4,5 @@ Spotify_myScraper.py
 secrets.json
 spotify_cookies*.*
 *.egg-info
+*.whl
+*.tar.gz
