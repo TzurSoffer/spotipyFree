@@ -174,8 +174,7 @@ class Spotify:
                     "disc_number": trackV2["discNumber"],
                     "track_number": trackV2["trackNumber"],
                     "explicit": trackV2["contentRating"]["label"] == "EXPLICIT",
-                    "external_ids": {"isrc": ""},
-                    
+                    "external_ids": {"isrc": ""}
                 }}
                 allTracks.append(meta)
 
@@ -208,7 +207,7 @@ class Spotify:
             "external_urls": {"spotify": track["uri"]},
             "popularity": 10, #< needs fixing
             "type": "track",
-            "external_ids": {}
+            "external_ids": {"isrc": ""}
             
         }
         

@@ -1,4 +1,6 @@
 .history/
+build/
+dist/
 data.py
 Spotify_myScraper.py
 secrets.json
