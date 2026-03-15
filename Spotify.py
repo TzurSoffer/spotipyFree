@@ -76,8 +76,18 @@ class Spotify:
         return(self._formatAlbum(merged, total, limit, offset, end))
     
     def playlist(self, playlistId, limit=-1, offset=0, *args, **kwargs):
-        # self._next = lambda: self.playlist(limit=limit, offset=offset+limit)
-        return(spotapi.PublicPlaylist(playlistId).get_playlist_info()["data"]["playlistV2"])
+        playlist = spotapi.PublicPlaylist(playlistId).get_playlist_info()["data"]["playlistV2"]
+        playlist["owner"] = playlist["ownerV2"]["data"]
+        playlist.pop("ownerV2", None)
+        playlist["owner"]["display_name"] = playlist["owner"]["name"]
+        playlist["external_urls"] = {}
+        playlist["external_urls"]["spotify"] = playlist["owner"]["uri"]
+        try:
+            playlist["images"] = playlist["images"]["items"][-1]["sources"]
+        except:
+            playlist["images"] = []
+        
+        return(playlist)
     
     def playlist_items(self, playlistId, limit=50, offset=0, *args, **kwargs):
         if self.isUrl(playlistId):
@@ -85,7 +95,25 @@ class Spotify:
 
         allTracks = []
         for chunk in spotapi.PublicPlaylist(playlistId).paginate_playlist():
-            allTracks.extend(chunk)
+            for track in chunk["items"]:
+                track = track["itemV3"]["data"]
+                meta = {"track": {
+                    "name": track['identityTrait']["name"],
+                    "id": track["uri"].removeprefix("spotify:track:"),
+                    "duration_ms": track["consumptionExperienceTrait"]["duration"]["seconds"]/1000+track["consumptionExperienceTrait"]["duration"]["nanoSeconds"]*1_000_000,
+                    "description": track["identityTrait"]["description"],
+                    "artists": track["identityTrait"]["contributors"]["items"],
+                    "album": {},
+                    "type": track["identityTrait"]["type"],
+                    "external_urls": {"spotify": track["identityTrait"]["contentHierarchyParent"]["uri"]},
+                    "is_local": False,
+                    "disc_number": 0,     #< idk
+                    "track_number": 0,    #< idk
+                    "explicit": False,    #< idk
+                    "external_ids": {},   #< idk
+                    
+                }}
+                allTracks.append(meta)
 
         total = len(allTracks)
 
@@ -93,13 +121,36 @@ class Spotify:
             limit = total
 
         end = offset + limit
-        items = allTracks[offset:end]
-        return(self._formatAlbum(items, total, limit, offset, end))
+        # items = allTracks[offset:end]
+        return(self._formatAlbum(allTracks, total, limit, offset, end))
 
     def track(self, trackId, *args, **kwargs):
         if self.isUrl(trackId):
             trackId = self.urlToId(trackId)
-        return(spotapi.PublicTrack(trackId).get_track_info()["data"]["trackUnion"])
+        
+        track = spotapi.Song().get_track_info(trackId)["data"]["trackUnion"]
+        artists = track["firstArtist"]["items"].extend(track["otherArtists"]["items"])
+        for artist in artists:
+            artist["name"] = self.artist["profile"]["name"]
+            artist["external_urls"] = {"spotify": artist["uri"]}
+            artist.pop("profile", None)
+            artist.pop("discography", None)
+            artist.pop("visuals", None)
+            artist.pop("relatedContent", None)
+        meta = {
+            "name": track["name"],
+            "id": track["id"],
+            "disc_number": track["trackNumber"],
+            "track_number": track["trackNumber"],
+            "duration_ms": track["duration"]["totalMilliseconds"],
+            "artists": artists,
+            "album": track["albumOfTrack"],
+            "explicit": track["contentRating"]["label"] == "EXPLICIT",
+            "external_ids": {}
+            
+        }
+        
+        return(meta)
 
     def search(self, query, limit=50, offset=0, type="track", *args, **kwargs):
         results = spotapi.Search().search(query)["data"]
@@ -137,4 +188,7 @@ class Spotify:
 if __name__ == "__main__":
     sp = Spotify()
     import pysole
-    pysole.probe()
+    pysole.probe(runRemainingCode=True, printStartupCode=True)
+    # playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
+    track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
+    
