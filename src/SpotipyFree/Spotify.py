@@ -158,9 +158,12 @@ class Spotify:
             for track in chunk["items"]:
                 trackV3 = track["itemV3"]["data"]
                 trackV2 = track["itemV2"]["data"]
-                trackType = trackV2["mediaType"]
-                if trackType == "AUDIO":
-                    trackType = "track"
+                trackType = "None"
+                try:
+                    if trackV2["mediaType"] == "AUDIO":
+                        trackType = "track"
+                except:
+                    continue
                 meta = {"track": {
                     "name": trackV3['identityTrait']["name"],
                     "id": trackV3["uri"].removeprefix("spotify:track:"),
