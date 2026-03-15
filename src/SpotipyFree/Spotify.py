@@ -1,11 +1,5 @@
 import spotapi
 
-class Genre():
-    def __init__(self, name: str, *args, **kwargs):
-        self.name = name
-    def title(self, *args, **kwargs):
-        return(self.name)
-
 class Spotify:
     """
     Wrapper that makes SpotAPI behave like Spotipy.
@@ -35,7 +29,7 @@ class Spotify:
         for artist in artists:
             artist["name"] = artist["profile"]["name"]
             artist["external_urls"] = {"spotify": artist["uri"]}
-            artist["genres"] = [Genre("")]
+            artist["genres"] = [""]
             artist.pop("profile", None)
             artist.pop("discography", None)
             artist.pop("visuals", None)
@@ -55,11 +49,15 @@ class Spotify:
     def _formatTracks(self, tracks):
         allTracks = []
         for track in tracks:
-            uid = track["uid"]
             track = track["track"]
+            trackId = track["uri"].removeprefix("spotify:track:")
+            url = "https://open.spotify.com/track/"+trackId
             meta = {
                 "name": track["name"],
-                "external_urls": {"spotify": uid},
+                "id": trackId,
+                "song_id": trackId,
+                "url": url,
+                "external_urls": {"spotify": url},
                 "duration_ms": track["duration"]["totalMilliseconds"],
                 "disc_number": track["discNumber"],
                 "track_number": track["trackNumber"],
@@ -80,14 +78,16 @@ class Spotify:
 
         album = spotapi.PublicAlbum(albumId).get_album_info()["data"]["albumUnion"]
         artists = self._getArtists(album["artists"]["items"])
+        tracks = self._formatTracks(album["tracksV2"]["items"])
+        album["id"] = album["uri"].removeprefix("spotify:album:")
         album["artists"] = artists
-        album["tracks"] = {"items": self._formatTracks(album["tracksV2"]["items"])}
+        album["tracks"] = {"items": tracks}
         album["total_tracks"] = len(album["tracks"]["items"])
         album["images"] = album["coverArt"]["sources"]
         album["release_date"] = album["date"]["isoString"].split("T")[0]
         album["album_type"] = "album"
         album["copyrights"] = [{"text": "", "type": ""}]
-        album["genres"] = [Genre("")]
+        album["genres"] = [""]
 
         return(album)
 
@@ -114,7 +114,7 @@ class Spotify:
             
         artist = spotapi.Artist().get_artist(artistId)["data"]["artistUnion"]
         artist["name"] = artist["profile"]["name"]
-        artist["genres"] = [Genre("")]
+        artist["genres"] = [""]
         return(artist)
     
     def artist_albums(self, artistId, limit=-1, offset=0, include_groups="album", *args, **kwargs):
@@ -162,25 +162,26 @@ class Spotify:
                 try:
                     if trackV2["mediaType"] == "AUDIO":
                         trackType = "track"
-                except:
-                    continue
-                meta = {"track": {
-                    "name": trackV3['identityTrait']["name"],
-                    "id": trackV3["uri"].removeprefix("spotify:track:"),
-                    "duration_ms": trackV2["trackDuration"]["totalMilliseconds"],
-                    "description": trackV3["identityTrait"]["description"],
-                    "artists": trackV3["identityTrait"]["contributors"]["items"],
-                    "album": {},
-                    "type": trackType,
-                    "external_urls": {"spotify": "https://open.spotify.com/track/"+trackV2["uri"].removeprefix("spotify:track:")},
-                    "is_local": False,
-                    "disc_number": trackV2["discNumber"],
-                    "track_number": trackV2["trackNumber"],
-                    "explicit": trackV2["contentRating"]["label"] == "EXPLICIT",
-                    "external_ids": {"isrc": ""}
-                }}
-                allTracks.append(meta)
 
+                    meta = {"track": {
+                        "name": trackV3['identityTrait']["name"],
+                        "id": trackV3["uri"].removeprefix("spotify:track:"),
+                        "duration_ms": trackV2["trackDuration"]["totalMilliseconds"],
+                        "description": trackV3["identityTrait"]["description"],
+                        "artists": trackV3["identityTrait"]["contributors"]["items"],
+                        "album": {},
+                        "type": trackType,
+                        "external_urls": {"spotify": "https://open.spotify.com/track/"+trackV2["uri"].removeprefix("spotify:track:")},
+                        "is_local": False,
+                        "disc_number": trackV2["discNumber"],
+                        "track_number": trackV2["trackNumber"],
+                        "explicit": trackV2["contentRating"]["label"] == "EXPLICIT",
+                        "external_ids": {"isrc": ""}
+                    }}
+                    allTracks.append(meta)
+
+                except:
+                    pass
         total = len(allTracks)
 
         if limit == -1:
