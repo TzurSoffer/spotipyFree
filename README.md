@@ -39,10 +39,7 @@ Bash
 
 ## Usage
 
-Python
-
-Run
-```
+```python
 from SpotipyFree import Spotify
 
 sp = Spotify()
@@ -52,4 +49,5 @@ album = sp.album("4m2880jivSbbyEGAKfITCa")
 albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
 ```
 
-It is **not affiliated with Spotify** and may break if Spotify changes their website.
+
+This project is in no way **affiliated with Spotify** and may break if Spotify changes their website.
