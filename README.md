@@ -1,25 +1,14 @@
-# Selenium-Spotify
+# SpotipyFree
 
-A lightweight **drop-in replacement for Spotipy** that uses **Selenium** to control and read data from the Spotify Web Player.
-
-This project mimics parts of the **Spotify Web API** without requiring developer credentials or the official API. Instead, it logs into the Spotify web player and scrapes playback information.
-
-Currently the library focuses on **retrieving the current playback state** in a format compatible with the Spotify API.
-
+A lightweight **drop-in replacement for Spotipy** without using the spotify api. This project was build because spotify removed acess to its API for non-premium users. This project doesn't use ANY Spotify APIs. 
 - - -
 
 ## Features
 
 *   Drop-in style response compatible with `spotipy`
 
-*   Cookie saving for faster loading times
-    
-*   No Spotify developer account required
-    
-*   Works directly with the Spotify Web Player
-    
-*   Simple login using username and password
-    
+*   No Spotify account required
+
 *   Returns playback data structured like the official Spotify API
     
 
@@ -27,32 +16,24 @@ Currently the library focuses on **retrieving the current playback state** in a 
 
 ## Current Status
 
-⚠️ This project is **experimental**.
+This project is **experimental**.
 
 Currently implemented:
 
-*   `current_playback()`  
-    Returns playback information similar to the Spotify Web API.
-    
-*   `current_user_playlists`
-    Returns information about playlists the user has saved.
-Limitations:
-
-*   Only the **currently playing track** and **current_user_playlists** is supported
-    
-*   Some page loads rely on DOM scraping and may break if Spotify updates their UI
-    
-*   Occasionally **Spotify CAPTCHA** may appear during login
-
+*   `track()`  
+*   `playlist()`
+*   `playlist_items()`
+*   `artist()`
+*   `artist_albums()`
+*   `album()`
+*   `album_tracks()`
 - - -
 
 ## Installation
 
 Bash
 
-pip install selenium
-
-You must also install **ChromeDriver** compatible with your Chrome version.
+`pip install spotipyFree`
 
 - - -
 
@@ -61,93 +42,14 @@ You must also install **ChromeDriver** compatible with your Chrome version.
 Python
 
 Run
+```
+from SpotipyFree import Spotify
 
-from selenium\_spotify import Spotify  
-  
-sp \= Spotify("username", "password")  
-  
-playback \= sp.current\_playback()  
-print(playback\["item"\]\["name"\])
-
-Example response structure (compatible with Spotipy):
-
-Python
-
-Run
-
-playback\["item"\]\["name"\]  
-playback\["item"\]\["artists"\]\[0\]\["name"\]  
-playback\["item"\]\["album"\]\["name"\]
-
-- - -
-
-## Secrets File Example
-
-The included example expects a `secrets.json` file:
-
-JSON
-
-{  
-  "spotify": {  
-    "username": "your\_username",  
-    "password": "your\_password"  
-  }  
-}
-
-- - -
-
-## How It Works
-
-1.  Selenium logs into `accounts.spotify.com`
-    
-2.  The web player is opened
-    
-3.  The script navigates to the **queue page**
-    
-4.  Track metadata is extracted from the DOM
-    
-5.  A response object is generated matching the **Spotify Web API format**
-    
-
-- - -
-
-## Known Issues
-
-*   CAPTCHA sometimes appears during login
-    
-*   Page structure changes from Spotify can break selectors
-    
-*   Selenium adds noticeable overhead compared to API calls
-    
-*   Requires a running Chrome browser
-
-*   Code is ugly, I need to fix that...
-
-*  Stealth mode not working
-    
-
-- - -
-
-## Planned Improvements
-    
-*   Faster page scraping
-    
-*   More API compatibility
-    
-    *   `devices`
-        
-    *   `playlists`
-        
-    *   `pause / play`
-        
-    *   `next / previous`
-        
-*   Headless mode improvements
-
-- - -
-
-## Warning
-
-This project uses **browser automation** and **unofficial scraping** of the Spotify Web Player.
+sp = Spotify()
+playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
+track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
+album = sp.album("4m2880jivSbbyEGAKfITCa")
+albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
+```
 
 It is **not affiliated with Spotify** and may break if Spotify changes their website.
