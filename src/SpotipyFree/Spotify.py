@@ -156,10 +156,10 @@ class Spotify:
         allTracks = []
         for chunk in spotapi.PublicPlaylist(playlistId).paginate_playlist():
             for track in chunk["items"]:
-                trackV3 = track["itemV3"]["data"]
-                trackV2 = track["itemV2"]["data"]
-                trackType = "None"
                 try:
+                    trackV3 = track["itemV3"]["data"]
+                    trackV2 = track["itemV2"]["data"]
+                    trackType = "None"
                     if trackV2["mediaType"] == "AUDIO":
                         trackType = "track"
 
@@ -196,8 +196,11 @@ class Spotify:
             trackId = self.urlToId(trackId)
         
         track = spotapi.Song().get_track_info(trackId)["data"]["trackUnion"]
-        artists = track["firstArtist"]["items"]
-        artists.extend(track["otherArtists"]["items"])
+        try:
+            artists = track["firstArtist"]["items"]
+            artists.extend(track["otherArtists"]["items"])
+        except:
+            artists = ["Not Found"]
         artists = self._getArtists(artists)
         meta = {
             "name": track["name"],
