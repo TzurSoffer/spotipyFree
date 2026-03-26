@@ -233,8 +233,11 @@ class Spotify:
             trackId = self.urlToId(trackId)
         
         track = spotapi.Song().get_track_info(trackId)["data"]["trackUnion"]
-        artists = track["firstArtist"]["items"]
-        artists.extend(track["otherArtists"]["items"])
+        try:
+            artists = track["firstArtist"]["items"]
+            artists.extend(track["otherArtists"]["items"])
+        except:
+            artists = ["Not Found"]
         artists = self._getArtists(artists)
         songId = track["uri"].removeprefix("spotify:track:")
         meta = {
