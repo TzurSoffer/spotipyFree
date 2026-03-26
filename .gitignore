@@ -1,8 +1,10 @@
 .history/
+.venv/
 build/
 dist/
 data.py
 Spotify_myScraper.py
+spotipyResponseSample.json
 secrets.json
 spotify_cookies*.*
 *.egg-info

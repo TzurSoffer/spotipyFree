@@ -1,4 +1,6 @@
+import requests
 import spotapi
+from concurrent.futures import ThreadPoolExecutor
 
 class Spotify:
     """
@@ -14,7 +16,8 @@ class Spotify:
         if username != None:
             self.user_auth = True
             raise Exception("Login not yet implemented")
-    
+        self._isrcExecutor = ThreadPoolExecutor(max_workers=10)
+
     @staticmethod
     def init(*args, **kwargs):
         return
@@ -24,7 +27,39 @@ class Spotify:
     
     def isUrl(self, test):
         return(test.startswith("spotify:") or test.startswith("https://open.spotify.com/") or test.startswith("open.spotify"))
-    
+
+    def _getIsrc(self, songId):
+        """ Get the ISRC number of the songs using `groover.co` this is an unfortunate dep until a better fix is implemented """
+        try:
+            url = "https://groover.co/core/distantapi/spotify/getdata/"
+
+            headers = {
+                "accept": "application/json",
+                "origin": "https://groover.co",
+                "referer": "https://groover.co/en/lp/free-tools/isrc-finder/",
+                "content-type": "application/json",
+            }
+
+            payload = {
+                "url": f"https://open.spotify.com/track/{songId}"
+            }
+
+            response = requests.post(url, headers=headers, json=payload)
+            
+            if response.status_code != 200:
+                return("")
+            return(response.json()["external_ids"]["isrc"])
+        except Exception as e:
+            print("Could not fetch ISRC: "+str(e))
+            return("")
+
+    def _getIsrc_async(self, songId, meta):
+        def task():
+            isrc = self._getIsrc(songId)
+            meta["track"]["external_ids"]["isrc"] = isrc
+
+        self._isrcExecutor.submit(task)
+
     def _getArtists(self, artists):
         for artist in artists:
             artist["name"] = artist["profile"]["name"]
@@ -156,16 +191,18 @@ class Spotify:
         allTracks = []
         for chunk in spotapi.PublicPlaylist(playlistId).paginate_playlist():
             for track in chunk["items"]:
-                trackV3 = track["itemV3"]["data"]
-                trackV2 = track["itemV2"]["data"]
-                trackType = "None"
                 try:
+                    trackV3 = track["itemV3"]["data"]
+                    trackV2 = track["itemV2"]["data"]
+                    trackType = "None"
                     if trackV2["mediaType"] == "AUDIO":
                         trackType = "track"
+                    
+                    songId = trackV3["uri"].removeprefix("spotify:track:")
 
                     meta = {"track": {
                         "name": trackV3['identityTrait']["name"],
-                        "id": trackV3["uri"].removeprefix("spotify:track:"),
+                        "id": songId,
                         "duration_ms": trackV2["trackDuration"]["totalMilliseconds"],
                         "description": trackV3["identityTrait"]["description"],
                         "artists": trackV3["identityTrait"]["contributors"]["items"],
@@ -178,8 +215,8 @@ class Spotify:
                         "explicit": trackV2["contentRating"]["label"] == "EXPLICIT",
                         "external_ids": {"isrc": ""}
                     }}
+                    self._getIsrc_async(songId, meta)
                     allTracks.append(meta)
-
                 except:
                     pass
         total = len(allTracks)
@@ -199,6 +236,7 @@ class Spotify:
         artists = track["firstArtist"]["items"]
         artists.extend(track["otherArtists"]["items"])
         artists = self._getArtists(artists)
+        songId = track["uri"].removeprefix("spotify:track:")
         meta = {
             "name": track["name"],
             "id": track["id"],
@@ -211,7 +249,7 @@ class Spotify:
             "external_urls": {"spotify": track["uri"]},
             "popularity": 10, #< needs fixing
             "type": "track",
-            "external_ids": {"isrc": ""}
+            "external_ids": {"isrc": self._getIsrc(songId)}
             
         }
         
