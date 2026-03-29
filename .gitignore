@@ -4,7 +4,7 @@ build/
 dist/
 data.py
 Spotify_myScraper.py
-spotipyResponseSample.json
+*.json
 secrets.json
 spotify_cookies*.*
 *.egg-info

@@ -61,9 +61,19 @@ class Spotify:
         self._isrcExecutor.submit(task)
 
     def _getArtists(self, artists):
-        for artist in artists:
+        for i, artist in enumerate(artists):
+            if type(artist) == str:
+                artists[i] = {
+                    "Name": "",
+                    "href": "",
+                    "external_urls": {"spotify": ""},
+                    "genres": [""]
+                }
+                continue
+            print(artist)
             artist["name"] = artist["profile"]["name"]
-            artist["external_urls"] = {"spotify": artist["uri"]}
+            artist["external_urls"] = {"spotify": artist["uri"].replace("spotify:artist:", "https://open.spotify.com/artist/")}
+            artist["href"] = artist["uri"].replace("spotify:artist:", "https://api.spotify.com/v1/artists/")
             artist["genres"] = [""]
             artist.pop("profile", None)
             artist.pop("discography", None)
@@ -71,7 +81,7 @@ class Spotify:
             artist.pop("relatedContent", None)
         return(artists)
 
-    def _formatAlbum(self, items, total, limit, offset, end):
+    def _addChunkInfo(self, items, total, limit, offset, end):
         return {
             "items": items,
             "total": total,
@@ -107,13 +117,7 @@ class Spotify:
     def next(self, *args, **kwargs):
         return(self._next(*args, **kwargs))
 
-    def album(self, albumId, *args, **kwargs):
-        if self.isUrl(albumId):
-            albumId = self.urlToId(albumId)
-
-        album = spotapi.PublicAlbum(albumId).get_album_info()["data"]["albumUnion"]
-        artists = self._getArtists(album["artists"]["items"])
-        tracks = self._formatTracks(album["tracksV2"]["items"])
+    def _formatAlbum(self, album, artists, tracks):
         album["id"] = album["uri"].removeprefix("spotify:album:")
         album["artists"] = artists
         album["tracks"] = {"items": tracks}
@@ -123,8 +127,16 @@ class Spotify:
         album["album_type"] = "album"
         album["copyrights"] = [{"text": "", "type": ""}]
         album["genres"] = [""]
-
         return(album)
+
+    def album(self, albumId, *args, **kwargs):
+        if self.isUrl(albumId):
+            albumId = self.urlToId(albumId)
+
+        album = spotapi.PublicAlbum(albumId).get_album_info()["data"]["albumUnion"]
+        artists = self._getArtists(album["artists"]["items"])
+        tracks = self._formatTracks(album["tracksV2"]["items"])
+        return(self._formatAlbum(album, artists, tracks))
 
     def album_tracks(self, albumId, limit=-1, offset=0, *args, **kwargs):
         if self.isUrl(albumId):
@@ -140,7 +152,7 @@ class Spotify:
             limit = total
         end = offset + limit
         # items = allTracks[offset:end]
-        return(self._formatAlbum(allTracks, total, limit, offset, end))
+        return(self._addChunkInfo(allTracks, total, limit, offset, end))
         # return({"items": allTracks, "next": False})
     
     def artist(self, artistId, *args, **kwargs):
@@ -168,7 +180,7 @@ class Spotify:
             limit = total
         end = offset + limit
         # items = merged[offset:end]
-        return(self._formatAlbum(merged, total, limit, offset, end))
+        return(self._addChunkInfo(merged, total, limit, offset, end))
     
     def playlist(self, playlistId, limit=-1, offset=0, *args, **kwargs):
         playlist = spotapi.PublicPlaylist(playlistId).get_playlist_info()["data"]["playlistV2"]
@@ -213,7 +225,7 @@ class Spotify:
                         "disc_number": trackV2["discNumber"],
                         "track_number": trackV2["trackNumber"],
                         "explicit": trackV2["contentRating"]["label"] == "EXPLICIT",
-                        "external_ids": {"isrc": ""}
+                        "external_ids": {"isrc": "Will Propagate soon"}
                     }}
                     self._getIsrc_async(songId, meta)
                     allTracks.append(meta)
@@ -226,7 +238,7 @@ class Spotify:
 
         end = offset + limit
         # items = allTracks[offset:end]
-        return(self._formatAlbum(allTracks, total, limit, offset, end))
+        return(self._addChunkInfo(allTracks, total, limit, offset, end))
 
     def track(self, trackId, *args, **kwargs):
         if self.isUrl(trackId):
@@ -247,9 +259,9 @@ class Spotify:
             "track_number": track["trackNumber"],
             "duration_ms": track["duration"]["totalMilliseconds"],
             "artists": artists,
-            "album": track["albumOfTrack"],
+            "album": self._formatAlbum(track["albumOfTrack"], artists, tracks=track["albumOfTrack"]["tracks"]["items"]),
             "explicit": track["contentRating"]["label"] == "EXPLICIT",
-            "external_urls": {"spotify": track["uri"]},
+            "external_urls": {"spotify": "https://open.spotify.com/track/"+track["uri"].removeprefix("spotify:track:")},
             "popularity": 10, #< needs fixing
             "type": "track",
             "external_ids": {"isrc": self._getIsrc(songId)}
@@ -273,7 +285,7 @@ class Spotify:
         sliced = items[offset:end]
 
         self._next = lambda: self.search(query, limit=limit, offset=end, type=type)
-        return(self._formatAlbum(sliced, total, limit, offset, end))
+        return(self._addChunkInfo(sliced, total, limit, offset, end))
 
     def current_user_saved_tracks(self, limit=-1, offset=0, *args, **kwargs):
         self._next = lambda: self.current_user_saved_tracks(limit=limit, offset=offset+limit)
@@ -294,7 +306,7 @@ class Spotify:
 if __name__ == "__main__":
     sp = Spotify()
     try:
-        import pysole
+        import pysole  # type: ignore
     except:
         pysole = None
         print("To get an interactive console, do pip install liveConsole")
