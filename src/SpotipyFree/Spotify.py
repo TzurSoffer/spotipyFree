@@ -9,11 +9,12 @@ class Spotify:
     Only implements commonly used methods but can be expanded.
     """
 
-    def __init__(self, username=None, password=None):
+    def __init__(self, username=None, password=None, getIsrc=False, *args, **kwargs):
         self.user_auth = False
         self.use_cache_file = False
         self.no_cache = True
         self._next = None
+        self.getIsrc = getIsrc
         if username != None:
             self.user_auth = True
             raise Exception("Login not yet implemented")
@@ -238,18 +239,21 @@ class Spotify:
                         }}
 
                         allTracks.append(meta)
-                        tasks.append(self._getIsrc_async(session, songId))
+
+                        if self.getIsrc:
+                            tasks.append(self._getIsrc_async(session, songId))
 
                     except:
                         pass
 
-            results = await asyncio.gather(*tasks)
+            if self.getIsrc and tasks:
+                # apply isrcs
+                results = await asyncio.gather(*tasks)
 
-        # apply isrcs to tracks
-        isrc_map = dict(results)
-        for meta in allTracks:
-            sid = meta["track"]["id"]
-            meta["track"]["external_ids"]["isrc"] = isrc_map.get(sid, "")
+                isrc_map = dict(results)
+                for meta in allTracks:
+                    sid = meta["track"]["id"]
+                    meta["track"]["external_ids"]["isrc"] = isrc_map.get(sid, "")
 
         total = len(allTracks)
         if limit == -1:
@@ -291,8 +295,9 @@ class Spotify:
             "external_urls": {"spotify": "https://open.spotify.com/track/"+track["uri"].removeprefix("spotify:track:")},
             "popularity": 10, #< needs fixing
             "type": "track",
-            "external_ids": {"isrc": self._getIsrc(songId)}
-            
+            "external_ids": {
+                "isrc": self._getIsrc(songId) if self.getIsrc else ""
+            }
         }
         
         return(meta)
