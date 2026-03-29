@@ -6,7 +6,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = { file = "LICENSE" }
 authors = [{ name = "Tzur" }]
-dependencies = ["spotapi", "pymongo"]
+dependencies = ["spotapi", "aiohttp", "pymongo"]
 
 [build-system]
 requires = ["setuptools", "wheel"]

@@ -1,6 +1,7 @@
 import requests
 import spotapi
-from concurrent.futures import ThreadPoolExecutor
+import aiohttp
+import asyncio
 
 class Spotify:
     """
@@ -16,7 +17,6 @@ class Spotify:
         if username != None:
             self.user_auth = True
             raise Exception("Login not yet implemented")
-        self._isrcExecutor = ThreadPoolExecutor(max_workers=10)
 
     @staticmethod
     def init(*args, **kwargs):
@@ -28,37 +28,43 @@ class Spotify:
     def isUrl(self, test):
         return(test.startswith("spotify:") or test.startswith("https://open.spotify.com/") or test.startswith("open.spotify"))
 
-    def _getIsrc(self, songId):
-        """ Get the ISRC number of the songs using `groover.co` this is an unfortunate dep until a better fix is implemented """
+    def _getIsrc(self, songId, session=None):
+        url = "https://groover.co/core/distantapi/spotify/getdata/"
+
+        headers = {
+            "accept": "application/json",
+            "origin": "https://groover.co",
+            "referer": "https://groover.co/en/lp/free-tools/isrc-finder/",
+            "content-type": "application/json",
+        }
+
+        payload = {
+            "url": f"https://open.spotify.com/track/{songId}"
+        }
+
         try:
-            url = "https://groover.co/core/distantapi/spotify/getdata/"
-
-            headers = {
-                "accept": "application/json",
-                "origin": "https://groover.co",
-                "referer": "https://groover.co/en/lp/free-tools/isrc-finder/",
-                "content-type": "application/json",
-            }
-
-            payload = {
-                "url": f"https://open.spotify.com/track/{songId}"
-            }
-
-            response = requests.post(url, headers=headers, json=payload)
-            
-            if response.status_code != 200:
-                return("")
-            return(response.json()["external_ids"]["isrc"])
+            if session:  #< if using async
+                return session.post(url, headers=headers, json=payload)
+            else:
+                response = requests.post(url, headers=headers, json=payload)
+                if response.status_code != 200:
+                    return("")
+                return(response.json()["external_ids"]["isrc"])
         except Exception as e:
-            print("Could not fetch ISRC: "+str(e))
+            print("Could not fetch ISRC:", e)
             return("")
 
-    def _getIsrc_async(self, songId, meta):
-        def task():
-            isrc = self._getIsrc(songId)
-            meta["track"]["external_ids"]["isrc"] = isrc
+    async def _getIsrc_async(self, session, songId):
+        try:
+            async with self._getIsrc(songId, session) as resp:
+                if resp.status != 200:
+                    return songId, ""
 
-        self._isrcExecutor.submit(task)
+                data = await resp.json()
+                return songId, data.get("external_ids", {}).get("isrc", "")
+        except Exception as e:
+            print("Could not fetch ISRC:", e)
+            return songId, ""
 
     def _getArtists(self, artists):
         for i, artist in enumerate(artists):
@@ -70,7 +76,6 @@ class Spotify:
                     "genres": [""]
                 }
                 continue
-            print(artist)
             artist["name"] = artist["profile"]["name"]
             artist["external_urls"] = {"spotify": artist["uri"].replace("spotify:artist:", "https://open.spotify.com/artist/")}
             artist["href"] = artist["uri"].replace("spotify:artist:", "https://api.spotify.com/v1/artists/")
@@ -196,49 +201,71 @@ class Spotify:
         
         return(playlist)
     
-    def playlist_items(self, playlistId, limit=50, offset=0, *args, **kwargs):
+    async def playlist_items_async(self, playlistId, limit=50, offset=0, *args, **kwargs):
         if self.isUrl(playlistId):
             playlistId = self.urlToId(playlistId)
 
         allTracks = []
-        for chunk in spotapi.PublicPlaylist(playlistId).paginate_playlist():
-            for track in chunk["items"]:
-                try:
-                    trackV3 = track["itemV3"]["data"]
-                    trackV2 = track["itemV2"]["data"]
-                    trackType = "None"
-                    if trackV2["mediaType"] == "AUDIO":
-                        trackType = "track"
-                    
-                    songId = trackV3["uri"].removeprefix("spotify:track:")
+        tasks = []
 
-                    meta = {"track": {
-                        "name": trackV3['identityTrait']["name"],
-                        "id": songId,
-                        "duration_ms": trackV2["trackDuration"]["totalMilliseconds"],
-                        "description": trackV3["identityTrait"]["description"],
-                        "artists": trackV3["identityTrait"]["contributors"]["items"],
-                        "album": {},
-                        "type": trackType,
-                        "external_urls": {"spotify": "https://open.spotify.com/track/"+trackV2["uri"].removeprefix("spotify:track:")},
-                        "is_local": False,
-                        "disc_number": trackV2["discNumber"],
-                        "track_number": trackV2["trackNumber"],
-                        "explicit": trackV2["contentRating"]["label"] == "EXPLICIT",
-                        "external_ids": {"isrc": "Will Propagate soon"}
-                    }}
-                    self._getIsrc_async(songId, meta)
-                    allTracks.append(meta)
-                except:
-                    pass
+        async with aiohttp.ClientSession() as session:
+            for chunk in spotapi.PublicPlaylist(playlistId).paginate_playlist():
+                for track in chunk["items"]:
+                    try:
+                        trackV3 = track["itemV3"]["data"]
+                        trackV2 = track["itemV2"]["data"]
+
+                        trackType = "track" if trackV2["mediaType"] == "AUDIO" else "None"
+                        songId = trackV3["uri"].removeprefix("spotify:track:")
+
+                        meta = {"track": {
+                            "name": trackV3['identityTrait']["name"],
+                            "id": songId,
+                            "duration_ms": trackV2["trackDuration"]["totalMilliseconds"],
+                            "description": trackV3["identityTrait"]["description"],
+                            "artists": trackV3["identityTrait"]["contributors"]["items"],
+                            "album": {},
+                            "type": trackType,
+                            "external_urls": {
+                                "spotify": "https://open.spotify.com/track/" +
+                                trackV2["uri"].removeprefix("spotify:track:")
+                            },
+                            "is_local": False,
+                            "disc_number": trackV2["discNumber"],
+                            "track_number": trackV2["trackNumber"],
+                            "explicit": trackV2["contentRating"]["label"] == "EXPLICIT",
+                            "external_ids": {"isrc": ""}
+                        }}
+
+                        allTracks.append(meta)
+                        tasks.append(self._getIsrc_async(session, songId))
+
+                    except:
+                        pass
+
+            results = await asyncio.gather(*tasks)
+
+        # apply isrcs to tracks
+        isrc_map = dict(results)
+        for meta in allTracks:
+            sid = meta["track"]["id"]
+            meta["track"]["external_ids"]["isrc"] = isrc_map.get(sid, "")
+
         total = len(allTracks)
-
         if limit == -1:
             limit = total
 
         end = offset + limit
-        # items = allTracks[offset:end]
         return(self._addChunkInfo(allTracks, total, limit, offset, end))
+
+    def playlist_items(self, *args, **kwargs):
+        try:
+            loop = asyncio.get_event_loop()   #< bind to async thread if already exists
+            return(loop.run_until_complete(
+                self.playlist_items_async(*args, **kwargs)
+            ))
+        except RuntimeError:
+            return(asyncio.run(self.playlist_items_async(*args, **kwargs)))
 
     def track(self, trackId, *args, **kwargs):
         if self.isUrl(trackId):
