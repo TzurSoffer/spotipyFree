@@ -10,3 +10,4 @@ spotify_cookies*.*
 *.egg-info
 *.whl
 *.tar.gz
+upload.bat

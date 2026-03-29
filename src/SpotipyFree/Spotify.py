@@ -1,7 +1,5 @@
 import requests
 import spotapi
-import aiohttp
-import asyncio
 
 class Spotify:
     """
@@ -14,10 +12,18 @@ class Spotify:
         self.use_cache_file = False
         self.no_cache = True
         self._next = None
-        self.getIsrc = getIsrc
         if username != None:
             self.user_auth = True
             raise Exception("Login not yet implemented")
+        self.getIsrc = False
+        if getIsrc:
+            try:
+                import aiohttp
+                import asyncio
+                self.getIsrc = True
+            except:
+                print("aiohttp and asyncio are required for fetching ISRCs. Please install them to use this feature.")
+                self.getIsrc = False
 
     @staticmethod
     def init(*args, **kwargs):
@@ -208,8 +214,12 @@ class Spotify:
 
         allTracks = []
         tasks = []
+        session = None
 
-        async with aiohttp.ClientSession() as session:
+        if self.getIsrc:
+            session = aiohttp.ClientSession() # type: ignore
+
+        try:
             for chunk in spotapi.PublicPlaylist(playlistId).paginate_playlist():
                 for track in chunk["items"]:
                     try:
@@ -247,29 +257,32 @@ class Spotify:
                         pass
 
             if self.getIsrc and tasks:
-                # apply isrcs
-                results = await asyncio.gather(*tasks)
-
+                results = await asyncio.gather(*tasks) # type: ignore
                 isrc_map = dict(results)
+
                 for meta in allTracks:
                     sid = meta["track"]["id"]
                     meta["track"]["external_ids"]["isrc"] = isrc_map.get(sid, "")
+
+        finally:
+            if session:
+                await session.close()
 
         total = len(allTracks)
         if limit == -1:
             limit = total
 
         end = offset + limit
-        return(self._addChunkInfo(allTracks, total, limit, offset, end))
+        return self._addChunkInfo(allTracks, total, limit, offset, end)
 
     def playlist_items(self, *args, **kwargs):
         try:
-            loop = asyncio.get_event_loop()   #< bind to async thread if already exists
+            loop = asyncio.get_event_loop()   #< bind to async thread if already exists # type: ignore
             return(loop.run_until_complete(
                 self.playlist_items_async(*args, **kwargs)
             ))
         except RuntimeError:
-            return(asyncio.run(self.playlist_items_async(*args, **kwargs)))
+            return(asyncio.run(self.playlist_items_async(*args, **kwargs))) # type: ignore
 
     def track(self, trackId, *args, **kwargs):
         if self.isUrl(trackId):
