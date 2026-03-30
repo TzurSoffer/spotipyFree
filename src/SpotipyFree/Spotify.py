@@ -23,7 +23,6 @@ class Spotify:
                 self.getIsrc = True
             except:
                 print("aiohttp and asyncio are required for fetching ISRCs. Please install them to use this feature.")
-                self.getIsrc = False
 
     @staticmethod
     def init(*args, **kwargs):
@@ -33,7 +32,7 @@ class Spotify:
         return(url.split("/")[-1].split("?")[0])
     
     def isUrl(self, test):
-        return(test.startswith("spotify:") or test.startswith("https://open.spotify.com/") or test.startswith("open.spotify"))
+        return(test.startswith("spotify:") or test.startswith("https://open.spotify.com/") or test.startswith("http://open.spotify.com/") or test.startswith("open.spotify"))
 
     def _getIsrc(self, songId, session=None):
         url = "https://groover.co/core/distantapi/spotify/getdata/"
@@ -130,12 +129,13 @@ class Spotify:
         return(self._next(*args, **kwargs))
 
     def _formatAlbum(self, album, artists, tracks):
+        date = album.get("date", {"isoString": ""})
         album["id"] = album["uri"].removeprefix("spotify:album:")
         album["artists"] = artists
         album["tracks"] = {"items": tracks}
         album["total_tracks"] = len(album["tracks"]["items"])
         album["images"] = album["coverArt"]["sources"]
-        album["release_date"] = album["date"]["isoString"].split("T")[0]
+        album["release_date"] = date["isoString"].split("T")[0]
         album["album_type"] = "album"
         album["copyrights"] = [{"text": "", "type": ""}]
         album["genres"] = [""]
@@ -305,7 +305,7 @@ class Spotify:
             "artists": artists,
             "album": self._formatAlbum(track["albumOfTrack"], artists, tracks=track["albumOfTrack"]["tracks"]["items"]),
             "explicit": track["contentRating"]["label"] == "EXPLICIT",
-            "external_urls": {"spotify": "https://open.spotify.com/track/"+track["uri"].removeprefix("spotify:track:")},
+            "external_urls": {"spotify": "https://open.spotify.com/track/"+songId},
             "popularity": 10, #< needs fixing
             "type": "track",
             "external_ids": {
@@ -316,21 +316,39 @@ class Spotify:
         return(meta)
 
     def search(self, query, limit=50, offset=0, type="track", *args, **kwargs):
-        results = spotapi.Search().search(query)["data"]
+        pages = spotapi.Public().song_search(query)
+        for results in pages:   #< save first page
+            break
+        
+        tracks = []
+        for res in results:
+            res = res["item"]["data"]
+            if res["__typename"] != "Track":   #< only accept tracks
+                continue
+            songId = res["uri"].removeprefix("spotify:track:")
+            artists = self._getArtists(res["artists"]["items"])
+            meta = {
+                "name": res["name"],
+                "id": res["id"],
+                "external_urls": {"spotify": "https://open.spotify.com/track/"+songId},
+                "duration_ms": res["duration"]["totalMilliseconds"],
+                "artists": artists,
+                "album": self._formatAlbum(res["albumOfTrack"], artists=artists, tracks=[]),
+                "explicit": res["contentRating"]["label"] == "EXPLICIT",
+                "type": "track",
+                "external_ids": {
+                    "isrc": self._getIsrc(songId) if self.getIsrc else ""
+                }
+            }
+            tracks.append(meta)
 
-        key = type + "s"
-        items = results.get(key, {}).get("items", [])
-
-        total = len(items)
+        total = len(tracks)
 
         if limit == -1:
             limit = total
 
         end = offset + limit
-        sliced = items[offset:end]
-
-        self._next = lambda: self.search(query, limit=limit, offset=end, type=type)
-        return(self._addChunkInfo(sliced, total, limit, offset, end))
+        return({"tracks": self._addChunkInfo(tracks, total, limit, offset, end)})
 
     def current_user_saved_tracks(self, limit=-1, offset=0, *args, **kwargs):
         self._next = lambda: self.current_user_saved_tracks(limit=limit, offset=offset+limit)

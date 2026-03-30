@@ -1,6 +1,6 @@
 # SpotipyFree
 
-A lightweight **drop-in replacement for Spotipy** without using the spotify api. This project was build because spotify removed acess to its API for non-premium users. This project doesn't use ANY Spotify APIs. 
+A lightweight **drop-in replacement for Spotipy** without using the spotify api. This project was build because spotify removed access to its API for non-premium users. This project doesn't use ANY Spotify APIs. 
 - - -
 
 ## Features
@@ -10,7 +10,7 @@ A lightweight **drop-in replacement for Spotipy** without using the spotify api.
 *   No Spotify account required
 
 *   Returns playback data structured like the official Spotify API
-    
+
 
 - - -
 
@@ -20,6 +20,7 @@ This project is **experimental**.
 
 Currently implemented:
 
+*   `search()`
 *   `track()`  
 *   `playlist()`
 *   `playlist_items()`
@@ -43,6 +44,7 @@ Bash
 from SpotipyFree import Spotify
 
 sp = Spotify()
+search = sp.search("Blinding Light - Weekend")
 playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
 track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
 album = sp.album("4m2880jivSbbyEGAKfITCa")
@@ -50,4 +52,4 @@ albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
 ```
 
 
-This project is in no way **affiliated with Spotify** and may break if Spotify changes their website.
+This project is in no way **affiliated with Spotify**.
