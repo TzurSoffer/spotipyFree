@@ -1,3 +1,4 @@
+import asyncio
 import requests
 import spotapi
 
@@ -19,7 +20,6 @@ class Spotify:
         if getIsrc:
             try:
                 import aiohttp
-                import asyncio
                 self.getIsrc = True
             except:
                 print("aiohttp and asyncio are required for fetching ISRCs. Please install them to use this feature.")
