@@ -129,7 +129,10 @@ class Spotify:
         return(self._next(*args, **kwargs))
 
     def _formatAlbum(self, album, artists, tracks):
-        date = album.get("date", {"isoString": ""})
+        altDate = {"isoString": "0000-00-00T00:00:00Z"}
+        date = album.get("date", altDate)
+        if date == None:
+            date = altDate
         album["id"] = album["uri"].removeprefix("spotify:album:")
         album["artists"] = artists
         album["tracks"] = {"items": tracks}
