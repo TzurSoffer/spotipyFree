@@ -170,10 +170,19 @@ class Spotify:
     def artist(self, artistId, *args, **kwargs):
         if self.isUrl(artistId):
             artistId = self.urlToId(artistId)
-            
-        artist = spotapi.Artist().get_artist(artistId)["data"]["artistUnion"]
-        artist["name"] = artist["profile"]["name"]
-        artist["genres"] = [""]
+
+        try:
+            artist = spotapi.Artist().get_artist(artistId)["data"]["artistUnion"]
+            artist["name"] = artist["profile"]["name"]
+            artist["genres"] = [""]
+        except:
+            artist = {
+                "name": "Not Found",
+                "id": artistId,
+                "uri": f"spotify:artist:{artistId}",
+                "external_urls": {"spotify": f"https://open.spotify.com/artist/{artistId}"},
+                "genres": [""]
+            }
         return(artist)
     
     def artist_albums(self, artistId, limit=-1, offset=0, include_groups="album", *args, **kwargs):
