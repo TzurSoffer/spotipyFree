@@ -1,6 +1,10 @@
+import json
 import asyncio
 import requests
-import spotapi
+import spotapi # type: ignore
+
+from utils import getCookiesFile
+from CookiesExtraction import interactiveMode as extractCookiesFromBrowser
 
 class Spotify:
     """
@@ -8,14 +12,15 @@ class Spotify:
     Only implements commonly used methods but can be expanded.
     """
 
-    def __init__(self, username=None, password=None, getIsrc=False, *args, **kwargs):
-        self.user_auth = False
-        self.use_cache_file = False
-        self.no_cache = True
+    def __init__(self, login=False, getIsrc=False, cookiesFile=None, *args, **kwargs):
+        self.auth = False
         self._next = None
-        if username != None:
-            self.user_auth = True
-            raise Exception("Login not yet implemented")
+        if cookiesFile != None:
+            self.login(cookiesFile)
+
+        elif login == True:
+            self.login()
+
         self.getIsrc = False
         if getIsrc:
             try:
@@ -23,10 +28,27 @@ class Spotify:
                 self.getIsrc = True
             except:
                 print("aiohttp and asyncio are required for fetching ISRCs. Please install them to use this feature.")
+    
+    def login(self, cookiesFile=None) -> bool:
+        if cookiesFile == None:
+            cookiesFile = getCookiesFile()
+        try:
+            cfg = spotapi.Config(
+                logger=spotapi.Logger()
+            )
+            saver = spotapi.saver.JSONSaver(cookiesFile)
+            try:
+                with open(cookiesFile, 'r') as f:
+                    sessions = json.load(f)
+                identifier = sessions[0]['identifier']
+            except:
+                raise (f"[-] Could not read sessions file")
 
-    @staticmethod
-    def init(*args, **kwargs):
-        return
+            self.auth = spotapi.Login.from_saver(saver, cfg, identifier)
+        except:
+            extractCookiesFromBrowser(cookiesFile)
+            return(self.login(cookiesFile))
+        return(True)
     
     def urlToId(self, url):
         return(url.split("/")[-1].split("?")[0])
@@ -391,3 +413,5 @@ if __name__ == "__main__":
     track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
     album = sp.album("4m2880jivSbbyEGAKfITCa")
     albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
+    
+    sp.login()
