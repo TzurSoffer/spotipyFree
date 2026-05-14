@@ -2,6 +2,8 @@
 .venv/
 build/
 dist/
+ignore
+__pycache__
 data.py
 Spotify_myScraper.py
 *.json
@@ -11,3 +13,4 @@ spotify_cookies*.*
 *.whl
 *.tar.gz
 upload.bat
+temp.py

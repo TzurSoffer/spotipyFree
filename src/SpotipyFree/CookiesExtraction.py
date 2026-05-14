@@ -66,38 +66,17 @@ def parseCookieString(cookieString: str) -> dict:
 def validateSpotifyCookies(cookies: dict) -> tuple[bool, list[str]]:
     """Check if we have the essential Spotify cookies."""
 
-    essentialCookies = ['sp_dc', 'sp_key']
-    importantCookies = [
-        'wp_access_token',
-        'wp_refresh_token',
-        'sp_t',
-        'sp_gaid'
-    ]
+    essentialCookies = ['sp_dc',
+                        'sp_key',
+                        'sp_t',
+                        'sp_gaid'
+                        ]
 
-    foundEssential = [
-        cookie for cookie in essentialCookies
-        if cookie in cookies
-    ]
-
-    foundImportant = [
-        cookie for cookie in importantCookies
-        if cookie in cookies
-    ]
-
-    hasEssential = len(foundEssential) > 0
-    warnings = []
-
-    if not hasEssential:
-        warnings.append(
-            "No essential Spotify cookies found (sp_dc, sp_key)"
-        )
-
-    if not foundImportant:
-        warnings.append(
-            "No authentication tokens found - session may expire quickly"
-        )
-
-    return hasEssential, warnings
+    for cookie in essentialCookies:
+        if cookie not in cookies:
+            return False
+    
+    return True
 
 
 def parseBrowserExport(data: str) -> dict:
@@ -150,6 +129,13 @@ def interactiveMode(outputFile="session.json"):
     print("Spotify Cookie Extractor from Browser")
     print("=" * 70)
 
+    email = input("Enter Spotify email or username: ").strip()
+
+    if not email:
+        print("[-] Email is required")
+        return False
+
+    print("\nPaste your cookies (JSON format, cURL, or cookie string):")
     print("\n[*] How to get cookies from your browser:")
     print("    1. Open https://open.spotify.com (make sure you're logged in)")
     print("    2. Open DevTools (F12 or Right-click -> Inspect)")
@@ -159,82 +145,28 @@ def interactiveMode(outputFile="session.json"):
     print("          - sp_dc, sp_key, wp_access_token, wp_refresh_token")
     print("          - sp_t, sp_gaid, _ga, _gid")
     print("    5. Paste below (the script will parse any format)")
-    print("    6. type END and press enter.")
+    print("    NOTE, if you paste the cookies and get stuck on the input screen (you dont move on, you didn't paste all the required cookies, try to refresh your browser and paste again)")
     print("\n" + "-" * 70 + "\n")
-
-    email = input("Enter Spotify email or username: ").strip()
-
-    if not email:
-        print("[-] Email is required")
-        return False
-
-    print("\nPaste your cookies (JSON format, cURL, or cookie string):")
-    print("(You can paste multiple lines. When done, type 'END' on a new line)")
-    print("Example formats:")
-    print("  Tab-separated: sp_dc\\tABC123\\t.spotify.com\\t/")
-    print("  Name=value: sp_dc=ABC123; sp_key=DEF456")
-    print("  Individual lines:")
-    print("    sp_dc=ABC123")
-    print("    sp_key=DEF456")
-    print("-" * 70)
 
     lines = []
 
     while True:
         line = input()
-
-        if line.strip().upper() == 'END':
-            break
-
         lines.append(line)
+        try:
+            cookies = parseBrowserExport("\n".join(lines))
+            if validateSpotifyCookies(cookies):
+                break
+        except:
+            pass
 
-    cookieInput = "\n".join(lines)
-
-    if not cookieInput.strip():
-        print("[-] No cookies provided")
-        return False
-
-    print("\n[*] Parsing cookies...")
-
-    try:
-        cookies = parseBrowserExport(cookieInput)
-
-    except Exception as error:
-        print(f"[-] Error parsing cookies: {error}")
-        return False
-
-    if not cookies:
-        print("[-] Could not extract any cookies")
-        return False
-
-    print(f"[+] Found {len(cookies)} cookies:")
+    print(f"[+] Saved session with {len(cookies)} cookies:")
 
     for key in sorted(cookies.keys())[:10]:
         print(f"    - {key}")
 
     if len(cookies) > 10:
         print(f"    ... and {len(cookies) - 10} more")
-
-    # Validate cookies
-    hasEssential, warnings = validateSpotifyCookies(cookies)
-
-    if warnings:
-        print("\n[!] Warnings:")
-
-        for warning in warnings:
-            print(f"    - {warning}")
-
-    if not hasEssential:
-        print("\n[-] No essential Spotify cookies detected!")
-        print("    Make sure you're logged into https://open.spotify.com")
-        print("    and copy cookies from the correct domain.")
-
-        retry = input("\nTry again? (y/n): ").strip().lower()
-
-        if retry == 'y':
-            return interactiveMode()
-
-        return False
 
     try:
         saveSession(cookies, email, outputFile)

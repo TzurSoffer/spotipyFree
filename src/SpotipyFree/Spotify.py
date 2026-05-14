@@ -28,33 +28,6 @@ class Spotify:
                 self.getIsrc = True
             except:
                 print("aiohttp and asyncio are required for fetching ISRCs. Please install them to use this feature.")
-    
-    def login(self, cookiesFile=None) -> bool:
-        if cookiesFile == None:
-            cookiesFile = getCookiesFile()
-        try:
-            cfg = spotapi.Config(
-                logger=spotapi.Logger()
-            )
-            saver = spotapi.saver.JSONSaver(cookiesFile)
-            try:
-                with open(cookiesFile, 'r') as f:
-                    sessions = json.load(f)
-                identifier = sessions[0]['identifier']
-            except:
-                raise (f"[-] Could not read sessions file")
-
-            self.auth = spotapi.Login.from_saver(saver, cfg, identifier)
-        except:
-            extractCookiesFromBrowser(cookiesFile)
-            return(self.login(cookiesFile))
-        return(True)
-    
-    def urlToId(self, url):
-        return(url.split("/")[-1].split("?")[0])
-    
-    def isUrl(self, test):
-        return(test.startswith("spotify:") or test.startswith("https://open.spotify.com/") or test.startswith("http://open.spotify.com/") or test.startswith("open.spotify"))
 
     def _getIsrc(self, songId, session=None):
         url = "https://groover.co/core/distantapi/spotify/getdata/"
@@ -147,9 +120,6 @@ class Spotify:
         
         return(allTracks)
 
-    def next(self, *args, **kwargs):
-        return(self._next(*args, **kwargs))
-
     def _formatAlbum(self, album, artists, tracks):
         altDate = {"isoString": "0000-00-00T00:00:00Z"}
         date = album.get("date", altDate)
@@ -165,6 +135,44 @@ class Spotify:
         album["copyrights"] = [{"text": "", "type": ""}]
         album["genres"] = [""]
         return(album)
+    
+    def _loginIfNeeded(self):
+        if self.isLoggedIn():
+            return
+        self.login()
+
+    def next(self, *args, **kwargs):
+        return(self._next(*args, **kwargs))
+
+    def login(self, cookiesFile=None) -> bool:
+        if cookiesFile == None:
+            cookiesFile = getCookiesFile()
+        try:
+            cfg = spotapi.Config(
+                logger=spotapi.Logger()
+            )
+            saver = spotapi.saver.JSONSaver(cookiesFile)
+            try:
+                with open(cookiesFile, 'r') as f:
+                    sessions = json.load(f)
+                identifier = sessions[0]['identifier']
+            except:
+                raise (f"[-] Could not read sessions file")
+
+            self.auth = spotapi.Login.from_saver(saver, cfg, identifier)
+        except:
+            extractCookiesFromBrowser(cookiesFile)
+            return(self.login(cookiesFile))
+        return(True)
+    
+    def isLoggedIn(self):
+        return(self.auth != None)
+    
+    def urlToId(self, url):
+        return(url.split("/")[-1].split("?")[0])
+    
+    def isUrl(self, test):
+        return(test.startswith("spotify:") or test.startswith("https://open.spotify.com/") or test.startswith("http://open.spotify.com/") or test.startswith("open.spotify"))
 
     def album(self, albumId, *args, **kwargs):
         if self.isUrl(albumId):
@@ -384,9 +392,65 @@ class Spotify:
         end = offset + limit
         return({"tracks": self._addChunkInfo(tracks, total, limit, offset, end)})
 
+    def me(self):
+        """ Get detailed profile information about the current user.
+            An alias for the 'current_user' method.
+        """
+        pass
+
+    def current_user_playlists(self, limit=50, offset=0):
+        """ Get current user playlists without required getting his profile
+            Parameters:
+                - limit  - the number of items to return
+                - offset - the index of the first item to return
+        """
+        pass
+
     def current_user_saved_tracks(self, limit=-1, offset=0, *args, **kwargs):
-        self._next = lambda: self.current_user_saved_tracks(limit=limit, offset=offset+limit)
-        return
+        self._loginIfNeeded()
+
+        pl = spotapi.playlist.PrivatePlaylist(self.auth).get_saved_tracks_info()
+        pl = pl["data"]["me"]["library"]["tracks"]["items"]
+        tracks = []
+        for raw in pl:
+            addedAt = raw["addedAt"]["isoString"]
+            songId = raw["track"]["_uri"].removeprefix("spotify:track:")
+            track = raw["track"]["data"]
+            try:
+                artists = track["artists"]["items"]
+            except:
+                artists = ["Not Found"]
+            artists = self._getArtists(artists)
+            meta = {
+                "name": track["name"],
+                "id": songId,
+                "disc_number": track["discNumber"],
+                "track_number": track["trackNumber"],
+                "duration_ms": track["duration"]["totalMilliseconds"],
+                "artists": artists,
+                "album": self._formatAlbum(track["albumOfTrack"], artists, tracks=[]),
+                "explicit": track["contentRating"]["label"] == "EXPLICIT",
+                "external_urls": {"spotify": "https://open.spotify.com/track/"+songId},
+                "popularity": 10, #< needs fixing
+                "type": "track",
+                "external_ids": {
+                    "isrc": self._getIsrc(songId) if self.getIsrc else ""
+                }
+            }
+            tracks.append(
+                {
+                "added_at": addedAt,
+                "track": meta}
+                )
+            
+
+        total = len(tracks)
+        if limit == -1:
+            limit = total
+        end = offset + limit
+        result = self._addChunkInfo(tracks, total, limit, offset, end)
+        result["href"] = f"https://api.spotify.com/v1/me/tracks?offset={offset}&limit={limit}"
+        return result
     
     def user_playlists(self, limit=-1, offset=0, *args, **kwargs):
         self._next = lambda: self.user_playlists(limit=limit, offset=offset+limit)
@@ -395,23 +459,34 @@ class Spotify:
     def current_user_playlists(self, limit=-1, offset=0, *args, **kwargs):
         self._next = lambda: self.current_user_playlists(limit=limit, offset=offset+limit)
         return
+
+    def current_user_recently_played(self, limit=50, after=None, before=None):
+        self._loginIfNeeded()
+        return(spotapi.player.PlayerStatus(sp.auth).last_songs_played)
     
     def current_user_followed_artists(self, limit=-1, offset=0, *args, **kwargs):
         self._next = lambda: self.current_user_followed_artists(limit=limit, offset=offset+limit)
         return
 
 if __name__ == "__main__":
+    import json
     sp = Spotify()
     try:
         import pysole  # type: ignore
     except:
         pysole = None
         print("To get an interactive console, do pip install liveConsole")
-    if pysole:
-        pysole.probe(runRemainingCode=True, printStartupCode=True)
-    playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
-    track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
-    album = sp.album("4m2880jivSbbyEGAKfITCa")
-    albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
     
     sp.login()
+    a = spotapi.player.PlayerStatus(sp.auth)
+    if pysole:
+        pysole.probe(runRemainingCode=True, printStartupCode=True)
+    # playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
+    # track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
+    # album = sp.album("4m2880jivSbbyEGAKfITCa")
+    # albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
+    saved = sp.current_user_saved_tracks()
+    with open("saved.json", "w") as f:
+        json.dump(saved, f, indent=4)
+    
+    
