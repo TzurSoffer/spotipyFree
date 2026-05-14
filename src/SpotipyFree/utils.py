@@ -2,6 +2,7 @@ import os
 import platform
 from pathlib import Path
 
+
 def getConfigFolder() -> Path:
     """
     Get the path to the config folder
@@ -20,6 +21,7 @@ def getConfigFolder() -> Path:
 
     return configPath
 
+
 def getCookiesFile() -> str:
     """
     Get the path to the cookies file
@@ -29,7 +31,7 @@ def getCookiesFile() -> str:
     cookiesFile = configFolder / "cookies.json"
 
     if not cookiesFile.exists():
-        with open(cookiesFile, 'w') as f:
+        with open(cookiesFile, "w") as f:
             f.write("{}")
 
     return str(cookiesFile)

@@ -7,24 +7,26 @@ class SpotifyFormatter:
         trackType = "track" if trackV2["mediaType"] == "AUDIO" else "None"
         songId = trackV3["uri"].removeprefix("spotify:track:")
 
-        meta = {"track": {
-            "name": trackV3['identityTrait']["name"],
-            "id": songId,
-            "duration_ms": trackV2["trackDuration"]["totalMilliseconds"],
-            "description": trackV3["identityTrait"]["description"],
-            "artists": trackV3["identityTrait"]["contributors"]["items"],
-            "album": {},
-            "type": trackType,
-            "external_urls": {
-                "spotify": "https://open.spotify.com/track/" +
-                trackV2["uri"].removeprefix("spotify:track:")
-            },
-            "is_local": False,
-            "disc_number": trackV2["discNumber"],
-            "track_number": trackV2["trackNumber"],
-            "explicit": trackV2["contentRating"]["label"] == "EXPLICIT",
-            "external_ids": {"isrc": ""}
-        }}
+        meta = {
+            "track": {
+                "name": trackV3["identityTrait"]["name"],
+                "id": songId,
+                "duration_ms": trackV2["trackDuration"]["totalMilliseconds"],
+                "description": trackV3["identityTrait"]["description"],
+                "artists": trackV3["identityTrait"]["contributors"]["items"],
+                "album": {},
+                "type": trackType,
+                "external_urls": {
+                    "spotify": "https://open.spotify.com/track/"
+                    + trackV2["uri"].removeprefix("spotify:track:")
+                },
+                "is_local": False,
+                "disc_number": trackV2["discNumber"],
+                "track_number": trackV2["trackNumber"],
+                "explicit": trackV2["contentRating"]["label"] == "EXPLICIT",
+                "external_ids": {"isrc": ""},
+            }
+        }
         return meta
 
     @staticmethod
@@ -43,14 +45,14 @@ class SpotifyFormatter:
             "track_number": track.get("trackNumber", 1),
             "duration_ms": track["duration"]["totalMilliseconds"],
             "artists": formattedArtists,
-            "album": SpotifyFormatter.formatAlbum(track["albumOfTrack"], formattedArtists, tracks=albumTracks),
+            "album": SpotifyFormatter.formatAlbum(
+                track["albumOfTrack"], formattedArtists, tracks=albumTracks
+            ),
             "explicit": track["contentRating"]["label"] == "EXPLICIT",
-            "external_urls": {"spotify": "https://open.spotify.com/track/"+songId},
-            "popularity": 10, #< needs fixing
+            "external_urls": {"spotify": "https://open.spotify.com/track/" + songId},
+            "popularity": 10,  # < needs fixing
             "type": "track",
-            "external_ids": {
-                "isrc": ""
-            }
+            "external_ids": {"isrc": ""},
         }
         return meta
 
@@ -63,7 +65,7 @@ class SpotifyFormatter:
                 "uri": "",
                 "external_urls": {"spotify": ""},
                 "href": "",
-                "genres": [""]
+                "genres": [""],
             }
 
         name = ""
@@ -77,9 +79,15 @@ class SpotifyFormatter:
             "name": name,
             "id": uri.removeprefix("spotify:artist:"),
             "uri": uri,
-            "external_urls": {"spotify": uri.replace("spotify:artist:", "https://open.spotify.com/artist/")},
-            "href": uri.replace("spotify:artist:", "https://api.spotify.com/v1/artists/"),
-            "genres": artist.get("genres", [""])
+            "external_urls": {
+                "spotify": uri.replace(
+                    "spotify:artist:", "https://open.spotify.com/artist/"
+                )
+            },
+            "href": uri.replace(
+                "spotify:artist:", "https://api.spotify.com/v1/artists/"
+            ),
+            "genres": artist.get("genres", [""]),
         }
 
     @staticmethod
@@ -123,7 +131,7 @@ class SpotifyFormatter:
         for track in tracks:
             track = track["track"]
             trackId = track["uri"].removeprefix("spotify:track:")
-            url = "https://open.spotify.com/track/"+trackId
+            url = "https://open.spotify.com/track/" + trackId
             meta = {
                 "name": track["name"],
                 "id": trackId,
@@ -135,11 +143,10 @@ class SpotifyFormatter:
                 "track_number": track["trackNumber"],
                 "artists": SpotifyFormatter.formatArtists(track["artists"]["items"]),
                 "explicit": track["contentRating"]["label"] == "EXPLICIT",
-
             }
             allTracks.append(meta)
-        
-        return(allTracks)
+
+        return allTracks
 
     @staticmethod
     def formatRecentlyPlayedItem(track, played_at, context_uri):
@@ -150,8 +157,8 @@ class SpotifyFormatter:
                 "type": "unknown",
                 "uri": context_uri or "",
                 "external_urls": {"spotify": ""},
-                "href": ""
-            }
+                "href": "",
+            },
         }
 
     @staticmethod
@@ -161,7 +168,7 @@ class SpotifyFormatter:
             "limit": limit,
             "href": f"https://api.spotify.com/v1/me/player/recently-played?limit={limit}",
             "cursors": {"after": None, "before": None},
-            "next": None
+            "next": None,
         }
 
     @staticmethod
@@ -172,5 +179,5 @@ class SpotifyFormatter:
             "limit": limit,
             "offset": offset,
             "next": False,
-            "previous": offset - limit if offset - limit >= 0 else None
+            "previous": offset - limit if offset - limit >= 0 else None,
         }

@@ -27,7 +27,7 @@ def parseCookieString(cookieString: str) -> dict:
     cookies = {}
 
     # Handle different cookie formats
-    lines = cookieString.strip().split('\n')
+    lines = cookieString.strip().split("\n")
 
     for line in lines:
         line = line.strip()
@@ -36,28 +36,28 @@ def parseCookieString(cookieString: str) -> dict:
             continue
 
         # Try tab-separated format (Name\tValue\tDomain\tPath\t...)
-        if '\t' in line:
-            parts = line.split('\t')
+        if "\t" in line:
+            parts = line.split("\t")
 
             if len(parts) >= 2:
                 name = parts[0].strip()
                 value = parts[1].strip()
 
-                if name and value != 'VALUE':  # Skip header
+                if name and value != "VALUE":  # Skip header
                     cookies[name] = value
 
         # Try semicolon-separated format
-        elif ';' in line and '=' in line:
-            for item in line.split(';'):
+        elif ";" in line and "=" in line:
+            for item in line.split(";"):
                 item = item.strip()
 
-                if '=' in item:
-                    key, value = item.split('=', 1)
+                if "=" in item:
+                    key, value = item.split("=", 1)
                     cookies[key.strip()] = value.strip()
 
         # Try single cookie format (name=value)
-        elif '=' in line and not line.startswith('#'):
-            key, value = line.split('=', 1)
+        elif "=" in line and not line.startswith("#"):
+            key, value = line.split("=", 1)
             cookies[key.strip()] = value.strip()
 
     return cookies
@@ -66,16 +66,12 @@ def parseCookieString(cookieString: str) -> dict:
 def validateSpotifyCookies(cookies: dict) -> tuple[bool, list[str]]:
     """Check if we have the essential Spotify cookies."""
 
-    essentialCookies = ['sp_dc',
-                        'sp_key',
-                        'sp_t',
-                        'sp_gaid'
-                        ]
+    essentialCookies = ["sp_dc", "sp_key", "sp_t", "sp_gaid"]
 
     for cookie in essentialCookies:
         if cookie not in cookies:
             return False
-    
+
     return True
 
 
@@ -85,16 +81,11 @@ def parseBrowserExport(data: str) -> dict:
 
 
 def saveSession(
-    cookies: dict,
-    identifier: str,
-    outputFile: str = "sessions.json"
+    cookies: dict, identifier: str, outputFile: str = "sessions.json"
 ) -> bool:
     """Save cookies to sessions.json file."""
 
-    session = {
-        "identifier": identifier,
-        "cookies": cookies
-    }
+    session = {"identifier": identifier, "cookies": cookies}
 
     # Create or append to sessions.json
     sessions = []
@@ -102,7 +93,7 @@ def saveSession(
 
     if outputPath.exists():
         try:
-            with open(outputPath, 'r') as file:
+            with open(outputPath, "r") as file:
                 sessions = json.load(file)
 
         except Exception:
@@ -116,7 +107,7 @@ def saveSession(
 
     sessions.append(session)
 
-    with open(outputPath, 'w') as file:
+    with open(outputPath, "w") as file:
         json.dump(sessions, file, indent=2)
 
     return True
@@ -145,7 +136,9 @@ def interactiveMode(outputFile="session.json"):
     print("          - sp_dc, sp_key, wp_access_token, wp_refresh_token")
     print("          - sp_t, sp_gaid, _ga, _gid")
     print("    5. Paste below (the script will parse any format)")
-    print("    NOTE, if you paste the cookies and get stuck on the input screen (you dont move on, you didn't paste all the required cookies, try to refresh your browser and paste again)")
+    print(
+        "    NOTE, if you paste the cookies and get stuck on the input screen (you dont move on, you didn't paste all the required cookies, try to refresh your browser and paste again)"
+    )
     print("\n" + "-" * 70 + "\n")
 
     lines = []
