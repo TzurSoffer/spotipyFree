@@ -3,8 +3,8 @@ import asyncio
 import requests
 import spotapi # type: ignore
 
-from utils import getCookiesFile
-from CookiesExtraction import interactiveMode as extractCookiesFromBrowser
+from .utils import getCookiesFile
+from .CookiesExtraction import interactiveMode as extractCookiesFromBrowser
 
 class Spotify:
     """
@@ -13,7 +13,7 @@ class Spotify:
     """
 
     def __init__(self, login=False, getIsrc=False, cookiesFile=None, *args, **kwargs):
-        self.auth = False
+        self.user_auth = False
         self._next = None
         if cookiesFile != None:
             self.login(cookiesFile)
@@ -159,14 +159,14 @@ class Spotify:
             except:
                 raise (f"[-] Could not read sessions file")
 
-            self.auth = spotapi.Login.from_saver(saver, cfg, identifier)
+            self.user_auth = spotapi.Login.from_saver(saver, cfg, identifier)
         except:
             extractCookiesFromBrowser(cookiesFile)
             return(self.login(cookiesFile))
         return(True)
     
     def isLoggedIn(self):
-        return(self.auth != None)
+        return(type(self.user_auth) != bool)
     
     def urlToId(self, url):
         return(url.split("/")[-1].split("?")[0])
@@ -409,7 +409,7 @@ class Spotify:
     def current_user_saved_tracks(self, limit=-1, offset=0, *args, **kwargs):
         self._loginIfNeeded()
 
-        pl = spotapi.playlist.PrivatePlaylist(self.auth).get_saved_tracks_info()
+        pl = spotapi.playlist.PrivatePlaylist(self.user_auth).get_saved_tracks_info()
         pl = pl["data"]["me"]["library"]["tracks"]["items"]
         tracks = []
         for raw in pl:
@@ -462,7 +462,7 @@ class Spotify:
 
     def current_user_recently_played(self, limit=50, after=None, before=None):
         self._loginIfNeeded()
-        return(spotapi.player.PlayerStatus(sp.auth).last_songs_played)
+        return(spotapi.player.PlayerStatus(sp.user_auth).last_songs_played)
     
     def current_user_followed_artists(self, limit=-1, offset=0, *args, **kwargs):
         self._next = lambda: self.current_user_followed_artists(limit=limit, offset=offset+limit)
@@ -478,7 +478,7 @@ if __name__ == "__main__":
         print("To get an interactive console, do pip install liveConsole")
     
     sp.login()
-    a = spotapi.player.PlayerStatus(sp.auth)
+    a = spotapi.player.PlayerStatus(sp.user_auth)
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)
     # playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
