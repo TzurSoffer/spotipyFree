@@ -409,39 +409,39 @@ class Spotify:
     def current_user_saved_tracks(self, limit=-1, offset=0, *args, **kwargs):
         self._loginIfNeeded()
 
-        pl = spotapi.playlist.PrivatePlaylist(self.user_auth).get_saved_tracks_info()
-        pl = pl["data"]["me"]["library"]["tracks"]["items"]
+        pl = spotapi.playlist.PrivatePlaylist(self.user_auth).paginate_saved_tracks()
         tracks = []
-        for raw in pl:
-            addedAt = raw["addedAt"]["isoString"]
-            songId = raw["track"]["_uri"].removeprefix("spotify:track:")
-            track = raw["track"]["data"]
-            try:
-                artists = track["artists"]["items"]
-            except:
-                artists = ["Not Found"]
-            artists = self._getArtists(artists)
-            meta = {
-                "name": track["name"],
-                "id": songId,
-                "disc_number": track["discNumber"],
-                "track_number": track["trackNumber"],
-                "duration_ms": track["duration"]["totalMilliseconds"],
-                "artists": artists,
-                "album": self._formatAlbum(track["albumOfTrack"], artists, tracks=[]),
-                "explicit": track["contentRating"]["label"] == "EXPLICIT",
-                "external_urls": {"spotify": "https://open.spotify.com/track/"+songId},
-                "popularity": 10, #< needs fixing
-                "type": "track",
-                "external_ids": {
-                    "isrc": self._getIsrc(songId) if self.getIsrc else ""
+        for raws in pl:
+            for raw in raws["items"]:
+                addedAt = raw["addedAt"]["isoString"]
+                songId = raw["track"]["_uri"].removeprefix("spotify:track:")
+                track = raw["track"]["data"]
+                try:
+                    artists = track["artists"]["items"]
+                except:
+                    artists = ["Not Found"]
+                artists = self._getArtists(artists)
+                meta = {
+                    "name": track["name"],
+                    "id": songId,
+                    "disc_number": track["discNumber"],
+                    "track_number": track["trackNumber"],
+                    "duration_ms": track["duration"]["totalMilliseconds"],
+                    "artists": artists,
+                    "album": self._formatAlbum(track["albumOfTrack"], artists, tracks=[]),
+                    "explicit": track["contentRating"]["label"] == "EXPLICIT",
+                    "external_urls": {"spotify": "https://open.spotify.com/track/"+songId},
+                    "popularity": 10, #< needs fixing
+                    "type": "track",
+                    "external_ids": {
+                        "isrc": self._getIsrc(songId) if self.getIsrc else ""
+                    }
                 }
-            }
-            tracks.append(
-                {
-                "added_at": addedAt,
-                "track": meta}
-                )
+                tracks.append(
+                    {
+                    "added_at": addedAt,
+                    "track": meta}
+                    )
             
 
         total = len(tracks)
@@ -488,5 +488,6 @@ if __name__ == "__main__":
     saved = sp.current_user_saved_tracks()
     with open("saved.json", "w") as f:
         json.dump(saved, f, indent=4)
+    self = sp
     
     
