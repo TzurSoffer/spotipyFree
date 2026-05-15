@@ -2,10 +2,18 @@ import json
 import asyncio
 import requests
 import spotapi  # type: ignore
+from collections import deque
 
-from .utils import getCookiesFile
-from .CookiesExtraction import interactiveMode as extractCookiesFromBrowser
-from .Formatter import SpotifyFormatter
+try:
+    from .utils import getCookiesFile
+    from .CookiesExtraction import interactiveMode as extractCookiesFromBrowser
+    from .Formatter import SpotifyFormatter
+    from .LastPlayed import LastPlayedManger
+except ImportError:
+    from utils import getCookiesFile
+    from CookiesExtraction import interactiveMode as extractCookiesFromBrowser
+    from Formatter import SpotifyFormatter
+    from LastPlayed import LastPlayedManger
 
 
 class Spotify:
@@ -17,6 +25,8 @@ class Spotify:
     def __init__(self, login=False, getIsrc=False, cookiesFile=None, *args, **kwargs):
         self.user_auth = False
         self._next = None
+        self.lastPlayedManager = None
+        self.recentlyPlayed = deque(maxlen=50)  # type: ignore
         if cookiesFile != None:
             self.login(cookiesFile)
 
@@ -91,6 +101,28 @@ class Spotify:
         if self.isLoggedIn():
             return
         self.login()
+
+    def _addToRecentlyPlayed(self, trackUri, playedAt, contextUri):
+        track = self.track(trackUri.split(":")[-1])
+        contextId = contextUri.split(":")[-1]
+        contextType = contextUri.split(":")[1]
+        context = {
+            "type": contextType,
+            "href": f"https://api.spotify.com/v1/{contextType}s/{contextId}",
+            "external_urls": {
+                "spotify": f"https://open.spotify.com/{contextType}/{contextId}"
+            },
+            "uri": contextUri,
+        }
+        self.recentlyPlayed.append(
+            {"track": track, "played_at": playedAt, "context": context}
+        )
+
+    def startLastPlayedListener(self):
+        self._loginIfNeeded()
+        if not self.lastPlayedManager:
+            self.lastPlayedManager = LastPlayedManger(self.user_auth)
+        self.lastPlayedManager.start(self._addToRecentlyPlayed)
 
     def next(self, *args, **kwargs):
         return self._next(*args, **kwargs)
@@ -379,7 +411,8 @@ if __name__ == "__main__":
     sp = Spotify()
     sp.login()
     # a = spotapi.player.Player(sp.user_auth)
-    # status = spotapi.player.PlayerStatus(sp.user_auth)
+    status = spotapi.player.PlayerStatus(sp.user_auth)
+    sp.startLastPlayedListener()
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)
     playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
