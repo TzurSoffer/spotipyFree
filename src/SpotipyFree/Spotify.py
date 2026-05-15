@@ -22,13 +22,19 @@ class Spotify:
     Only implements commonly used methods but can be expanded.
     """
 
-    def __init__(self, login=False, getIsrc=False, cookiesFile=None, *args, **kwargs):
+    def __init__(self, login=False, getIsrc=False, cookiesFile=None, email=None, cookies=None, *args, **kwargs):
         self.user_auth = False
         self._next = None
         self.lastPlayedManager = None
         self.recentlyPlayed = deque(maxlen=50)  # type: ignore
         if cookiesFile != None:
             self.login(cookiesFile)
+        
+        elif email != None and cookies != None: #< allow direct login with cookies for interactive use
+            tempFile = getCookiesFile("temp_cookies.json")
+            with open(tempFile, "w") as f:
+                json.dump(cookies, f)
+            self.login(tempFile)
 
         elif login == True:
             self.login()
