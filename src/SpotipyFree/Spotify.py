@@ -22,15 +22,26 @@ class Spotify:
     Only implements commonly used methods but can be expanded.
     """
 
-    def __init__(self, login=False, getIsrc=False, cookiesFile=None, email=None, cookies=None, *args, **kwargs):
+    def __init__(
+        self,
+        login=False,
+        getIsrc=False,
+        cookiesFile=None,
+        email=None,
+        cookies=None,
+        *args,
+        **kwargs,
+    ):
         self.user_auth = False
         self._next = None
         self.lastPlayedManager = None
         self.recentlyPlayed = deque(maxlen=50)  # type: ignore
         if cookiesFile != None:
             self.login(cookiesFile)
-        
-        elif email != None and cookies != None: #< allow direct login with cookies for interactive use
+
+        elif (
+            email != None and cookies != None
+        ):  #< allow direct login with cookies for interactive use
             tempFile = getCookiesFile("temp_cookies.json")
             with open(tempFile, "w") as f:
                 json.dump(cookies, f)
@@ -124,7 +135,7 @@ class Spotify:
             {"track": track, "played_at": playedAt, "context": context}
         )
 
-    def startLastPlayedListener(self):
+    def startRecentlyPlayedListener(self):
         self._loginIfNeeded()
         if not self.lastPlayedManager:
             self.lastPlayedManager = LastPlayedManger(self.user_auth)
@@ -418,7 +429,7 @@ if __name__ == "__main__":
     sp.login()
     # a = spotapi.player.Player(sp.user_auth)
     status = spotapi.player.PlayerStatus(sp.user_auth)
-    sp.startLastPlayedListener()
+    sp.startRecentlyPlayedListener()
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)
     playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
