@@ -172,6 +172,41 @@ class SpotifyFormatter:
         }
 
     @staticmethod
+    def formatMe(userInfo, userPlan=None):
+        profile = userInfo.get("profile", {})
+        userId = profile.get("email")
+        return {
+            "country": profile.get("country"),
+            "display_name": profile.get("username"), #< wrong this is the id, not username
+            "email": userId,
+            "explicit_content": {"filter_enabled": False, "filter_locked": False},
+            "external_urls": {
+                "spotify": f"https://open.spotify.com/user/{userId}"
+            },
+            "followers": {
+                "href": None,
+                "total": -1
+            },
+            "href": f"https://api.spotify.com/v1/users/{userId}",
+            "id": userId,
+            "images": [
+                {
+                    "height": 300,
+                    "url": "https://i.scdn.co/image/null",
+                    "width": 300
+                },
+                {
+                    "height": 64,
+                    "url": "https://i.scdn.co/image/null",
+                    "width": 64
+                }
+            ],
+            "product": "null",
+            "type": "user",
+            "uri": f"spotify:user:{userId}"
+        }
+
+    @staticmethod
     def addChunkInfo(items, total, limit, offset, *args):
         return {
             "items": items,

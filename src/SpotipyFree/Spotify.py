@@ -97,23 +97,6 @@ class Spotify:
             print("Could not fetch ISRC:", e)
             return songId, ""
 
-    def update_recently_played(self, track_uri, played_at, context_uri):
-        if not hasattr(self, "recently_played"):
-            self.recently_played = SpotifyFormatter.initialRecentlyPlayed(20)
-
-        track_id = track_uri.split(":")[-1]
-        track = self.track(track_id)
-        entry = SpotifyFormatter.formatRecentlyPlayedItem(track, played_at, context_uri)
-
-        self.recently_played["items"].insert(0, entry)
-        if len(self.recently_played["items"]) > 20:
-            self.recently_played["items"].pop()
-
-        with open("recently_played_updated.json", "w", encoding="utf-8") as f:
-            json.dump(self.recently_played, f, indent=4, ensure_ascii=False)
-
-        return self.recently_played
-
     def _loginIfNeeded(self):
         if self.isLoggedIn():
             return
@@ -409,11 +392,13 @@ class Spotify:
         """Get detailed profile information about the current user.
         An alias for the 'current_user' method.
         """
-        pass
-
+        self._loginIfNeeded()
+        userInfo = spotapi.user.User(self.user_auth).get_user_info()
+        return SpotifyFormatter.formatMe(userInfo)
 
 if __name__ == "__main__":
     import json
+    import os
 
     try:
         import pysole  # type: ignore
@@ -421,17 +406,51 @@ if __name__ == "__main__":
         pysole = None
         print("To get an interactive console, do pip install liveConsole")
 
+    def makeJsonSafe(obj):
+        """
+        Recursively convert an object into something JSON‑serializable.
+        If an object isn't serializable, fall back to obj.__dict__.
+        """
+
+        # Already JSON‑safe types
+        if isinstance(obj, (str, int, float, bool)) or obj is None:
+            return obj
+
+        # Convert lists/tuples/sets
+        if isinstance(obj, (list, tuple, set)):
+            return [makeJsonSafe(x) for x in obj]
+
+        # Convert dicts
+        if isinstance(obj, dict):
+            return {str(k): makeJsonSafe(v) for k, v in obj.items()}
+
+        # Try serializing directly
+        try:
+            json.dumps(obj)
+            return obj
+        except Exception:
+            pass
+
+        # Try using __dict__
+        if hasattr(obj, "__dict__"):
+            return makeJsonSafe(obj.__dict__)
+
+        # Last resort: string representation
+        return str(obj)
+
     def save(jsonData, name="saved.json"):
-        with open(name, "w") as f:
-            json.dump(jsonData, f, indent=4)
+        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../", "Data", "Output", name), "w") as f:
+            json.dump(makeJsonSafe(jsonData), f, indent=4)
 
     sp = Spotify()
     sp.login()
-    # a = spotapi.player.Player(sp.user_auth)
+    # player = spotapi.player.Player(sp.user_auth)
     status = spotapi.player.PlayerStatus(sp.user_auth)
+    a = spotapi.player.Player(sp.user_auth)
     sp.startRecentlyPlayedListener()
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)
+    save(status.state.__dict__, "status.json")
     playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
     save(playlist, "playlist.json")
     track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
@@ -442,4 +461,6 @@ if __name__ == "__main__":
     save(albumTracks, "album_tracks.json")
     saved = sp.current_user_saved_tracks()
     save(saved, "saved_tracks.json")
+    me = sp.me()
+    save(me, "me.json")
     self = sp

@@ -29,6 +29,9 @@ Currently implemented:
 *   `artist_albums()`
 *   `album()`
 *   `album_tracks()`
+*   `current_user_recently_played()` - must first run startRecentlyPlayedListener
+*   `current_user_saved_tracks()`
+*   `me()`
 - - -
 
 ## Installation
