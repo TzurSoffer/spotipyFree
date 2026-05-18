@@ -15,6 +15,12 @@ except ImportError:
     from Formatter import SpotifyFormatter
     from LastPlayed import LastPlayedManger
 
+spotapi.client._FALLBACK_SECRET = (
+    61,
+    bytearray(
+        [44,55,47,42,70,40,34,114,76,74,50,111,120,97,75,76,94,102,43,69,49,120,118,80,64,78]
+    ),
+)
 
 class Spotify:
     """
@@ -446,7 +452,7 @@ if __name__ == "__main__":
     sp.login()
     # player = spotapi.player.Player(sp.user_auth)
     status = spotapi.player.PlayerStatus(sp.user_auth)
-    a = spotapi.player.Player(sp.user_auth)
+    # a = spotapi.player.Player(sp.user_auth)
     sp.startRecentlyPlayedListener()
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)
