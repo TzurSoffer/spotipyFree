@@ -21,6 +21,7 @@ spotapi.client._FALLBACK_SECRET = (
         [44,55,47,42,70,40,34,114,76,74,50,111,120,97,75,76,94,102,43,69,49,120,118,80,64,78]
     ),
 )
+spotapi.utils.Logger = spotapi.NoopLogger
 
 class Spotify:
     """
