@@ -468,9 +468,9 @@ if __name__ == "__main__":
         pysole.probe(runRemainingCode=True, printStartupCode=True)
 
     save(status.state.__dict__, "status.json")
-    artist = sp.artist("1Xyo4u8uXC1ZmMpatF05PJ")
+    artist = sp.artist("3Bd1cgCjtCI32PYvDC3ynO")
     save(artist, "artist.json")
-    artistAlbums = sp.artist_albums("1Xyo4u8uXC1ZmMpatF05PJ", include_groups="album,single,compilation")
+    artistAlbums = sp.artist_albums("3Bd1cgCjtCI32PYvDC3ynO", include_groups="album,single,compilation")
     save(artistAlbums, "artist_albums.json")
     playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
     save(playlist, "playlist.json")
@@ -480,6 +480,9 @@ if __name__ == "__main__":
     save(album, "album.json")
     albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
     save(albumTracks, "album_tracks.json")
+    search = sp.search("Blinding Light - Weekend")
+    save(search, "search.json")
+    
     saved = sp.current_user_saved_tracks()
     save(saved, "saved_tracks.json")
     me = sp.me()
