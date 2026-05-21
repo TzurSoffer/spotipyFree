@@ -101,7 +101,8 @@ class SpotifyFormatter:
         if date is None:
             date = altDate
 
-        album["id"] = album["uri"].removeprefix("spotify:album:")
+        albumId = album["uri"].removeprefix("spotify:album:")
+        album["id"] = albumId
         album["artists"] = artists
         album["tracks"] = {"items": tracks}
         album["total_tracks"] = len(album["tracks"]["items"])
@@ -109,6 +110,7 @@ class SpotifyFormatter:
         album["release_date"] = date["isoString"].split("T")[0]
         album["album_type"] = "album"
         album["copyrights"] = [{"text": "", "type": ""}]
+        album["external_urls"] = {"spotify": f"https://open.spotify.com/album/{albumId}"}
         album["genres"] = [""]
         return album
 

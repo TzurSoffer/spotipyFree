@@ -156,9 +156,6 @@ class Spotify:
     def isLoggedIn(self):
         return type(self.user_auth) != bool
 
-    def urlToId(self, url):
-        return url.split("/")[-1].split("?")[0]
-
     def isUrl(self, test):
         return (
             test.startswith("spotify:")
@@ -166,6 +163,9 @@ class Spotify:
             or test.startswith("http://open.spotify.com/")
             or test.startswith("open.spotify")
         )
+
+    def urlToId(self, url):
+        return url.split("/")[-1].split("?")[0]
 
     def album(self, albumId, *args, **kwargs):
         if self.isUrl(albumId):
@@ -216,25 +216,34 @@ class Spotify:
     def artist_albums(
         self, artistId, limit=-1, offset=0, include_groups="album", *args, **kwargs
     ):
+        if self.isUrl(artistId):
+            artistId = self.urlToId(artistId)
+
         allowed = set(include_groups.split(","))
         discog = spotapi.Artist().get_artist(artistId)["data"]["artistUnion"][
             "discography"
         ]
 
         merged = []
-        for group_name, group_data in discog.items():
-            if group_name in allowed:
-                if isinstance(group_data, dict) and "items" in group_data:
-                    merged.extend(group_data["items"])
+        for key, albumsList in discog.items():
+            key = key.removesuffix("s")
+            if key in allowed:
+                for albums in albumsList.get("items", []):
+                    for album in albums["releases"]["items"]:
+                        try:
+                            merged.append(self.album(album["id"]))
+                        except:
+                            pass
 
         total = len(merged)
         if limit == -1:
             limit = total
         end = offset + limit
-        # items = merged[offset:end]
         return SpotifyFormatter.addChunkInfo(merged, total, limit, offset, end)
 
     def playlist(self, playlistId, limit=-1, offset=0, *args, **kwargs):
+        if self.isUrl(playlistId):
+            playlistId = self.urlToId(playlistId)
         playlist = spotapi.PublicPlaylist(playlistId).get_playlist_info()["data"][
             "playlistV2"
         ]
@@ -415,7 +424,7 @@ if __name__ == "__main__":
 
     def makeJsonSafe(obj):
         """
-        Recursively convert an object into something JSON‑serializable.
+        Recursively convert an object into something JSON-serializable.
         If an object isn't serializable, fall back to obj.__dict__.
         """
 
@@ -457,7 +466,12 @@ if __name__ == "__main__":
     sp.startRecentlyPlayedListener()
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)
+
     save(status.state.__dict__, "status.json")
+    artist = sp.artist("1Xyo4u8uXC1ZmMpatF05PJ")
+    save(artist, "artist.json")
+    artistAlbums = sp.artist_albums("1Xyo4u8uXC1ZmMpatF05PJ", include_groups="album,single,compilation")
+    save(artistAlbums, "artist_albums.json")
     playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
     save(playlist, "playlist.json")
     track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
