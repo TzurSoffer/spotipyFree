@@ -111,16 +111,7 @@ class Spotify:
 
     def _addToRecentlyPlayed(self, trackUri, playedAt, contextUri):
         track = self.track(trackUri.split(":")[-1])
-        contextId = contextUri.split(":")[-1]
-        contextType = contextUri.split(":")[1]
-        context = {
-            "type": contextType,
-            "href": f"https://api.spotify.com/v1/{contextType}s/{contextId}",
-            "external_urls": {
-                "spotify": f"https://open.spotify.com/{contextType}/{contextId}"
-            },
-            "uri": contextUri,
-        }
+        context = SpotifyFormatter.formatContext(contextUri)
         self.recentlyPlayed.append(
             {"track": track, "played_at": playedAt, "context": context}
         )
@@ -176,7 +167,7 @@ class Spotify:
         tracks = SpotifyFormatter.formatTracks(album["tracksV2"]["items"])
         return SpotifyFormatter.formatAlbum(album, artists, tracks)
 
-    def album_tracks(self, albumId, limit=-1, offset=0, *args, **kwargs):
+    def album_tracks(self, albumId, *args, **kwargs):
         if self.isUrl(albumId):
             albumId = self.urlToId(albumId)
 
@@ -185,12 +176,7 @@ class Spotify:
             allTracks.extend(tracks)
         allTracks = SpotifyFormatter.formatTracks(allTracks)
 
-        total = len(allTracks)
-        if limit == -1:
-            limit = total
-        end = offset + limit
-        # items = allTracks[offset:end]
-        return SpotifyFormatter.addChunkInfo(allTracks, total, limit, offset, end)
+        return SpotifyFormatter.addChunkInfo(allTracks)
         # return({"items": allTracks, "next": False})
 
     def artist(self, artistId, *args, **kwargs):
@@ -235,11 +221,7 @@ class Spotify:
                         except:
                             pass
 
-        total = len(merged)
-        if limit == -1:
-            limit = total
-        end = offset + limit
-        return SpotifyFormatter.addChunkInfo(merged, total, limit, offset, end)
+        return SpotifyFormatter.addChunkInfo(merged)
 
     def playlist(self, playlistId, limit=-1, offset=0, *args, **kwargs):
         if self.isUrl(playlistId):
@@ -250,7 +232,7 @@ class Spotify:
         return SpotifyFormatter.formatPlaylist(playlist)
 
     async def playlist_items_async(
-        self, playlistId, limit=50, offset=0, *args, **kwargs
+        self, playlistId, *args, **kwargs
     ):
         if self.isUrl(playlistId):
             playlistId = self.urlToId(playlistId)
@@ -288,12 +270,7 @@ class Spotify:
             if session:
                 await session.close()
 
-        total = len(allTracks)
-        if limit == -1:
-            limit = total
-
-        end = offset + limit
-        return SpotifyFormatter.addChunkInfo(allTracks, total, limit, offset, end)
+        return SpotifyFormatter.addChunkInfo(allTracks)
 
     def playlist_items(self, *args, **kwargs):
         try:
@@ -320,7 +297,7 @@ class Spotify:
             track["external_ids"] = {"isrc": self._getIsrc(track["track_id"])}
         return track
 
-    def search(self, query, limit=50, offset=0, type="track", *args, **kwargs):
+    def search(self, query, type="track", *args, **kwargs):
         pages = spotapi.Public().song_search(query)
         for results in pages:  #< save first page
             break
@@ -336,14 +313,8 @@ class Spotify:
                 meta["external_ids"] = {"isrc": self._getIsrc(meta["track_id"])}
             tracks.append(meta)
 
-        total = len(tracks)
-
-        if limit == -1:
-            limit = total
-
-        end = offset + limit
         return {
-            "tracks": SpotifyFormatter.addChunkInfo(tracks, total, limit, offset, end)
+            "tracks": SpotifyFormatter.addChunkInfo(tracks)
         }
 
     def current_user_saved_tracks(self, limit=-1, offset=0, *args, **kwargs):
@@ -366,42 +337,94 @@ class Spotify:
                     meta["external_ids"] = {"isrc": self._getIsrc(meta["track_id"])}
                 tracks.append({"added_at": addedAt, "track": meta})
 
-        total = len(tracks)
-        if limit == -1:
-            limit = total
-        end = offset + limit
-        result = SpotifyFormatter.addChunkInfo(tracks, total, limit, offset, end)
+        result = SpotifyFormatter.addChunkInfo(tracks)
         result["href"] = (
             f"https://api.spotify.com/v1/me/tracks?offset={offset}&limit={limit}"
         )
         return result
 
-    def current_user_recently_played(self, limit=50, after=None, before=None):
+    def current_user_saved_tracks_contains(self, trackId, raiseOnLast=False, default=False):
         self._loginIfNeeded()
-        return spotapi.player.PlayerStatus(self.user_auth).last_songs_played
+        pl = spotapi.playlist.PrivatePlaylist(self.user_auth).paginate_saved_tracks()
+        for raws in pl:
+            for raw in raws["items"]:
+                songId = raw["track"]["_uri"].removeprefix("spotify:track:")
+                if songId == trackId:
+                    return True
+        if raiseOnLast:
+            raise Exception("Track not found in saved tracks")
+        return default
 
-    def user_playlists(self, limit=-1, offset=0, *args, **kwargs):
-        self._next = lambda: self.user_playlists(limit=limit, offset=offset + limit)
-        return
+    def current_user_recently_played(self, limit=50, after=None, before=None):
+        return list(self.recentlyPlayed)
+
+    def current_playback(self, *args, **kwargs):
+        self._loginIfNeeded()
+        state = spotapi.player.PlayerStatus(self.user_auth).state
+        track = self.track(state.track.uri.removeprefix("spotify:track:"))
+        context = SpotifyFormatter.formatContext(state.context_uri)
+        metadata = SpotifyFormatter.addChunkInfo(track)
+        metadata["context"] = context
+        metadata["is_playing"] = state.is_playing
+        metadata["is_paused"] = state.is_paused
+        metadata["progress_ms"] = 0
+        return metadata
 
     def current_user_playlists(self, limit=-1, offset=0, *args, **kwargs):
-        self._next = lambda: self.current_user_playlists(
-            limit=limit, offset=offset + limit
-        )
+        userPlaylists = []
+
+        library = spotapi.playlist.PrivatePlaylist(self.user_auth).get_library()
+        library = library["data"]["me"]["libraryV3"]["items"]
+        for res in library:
+            data = res["item"]["data"]
+            if data["__typename"] != "Playlist":
+                continue
+            plId = res["item"]["_uri"].removeprefix("spotify:playlist:")
+            try:
+                pl = self.playlist(plId)
+            except: #< private playlist that can't be accessed by self.playlist
+                pl = SpotifyFormatter.formatPlaylist(data)
+            userPlaylists.append(pl)
+        return SpotifyFormatter.addChunkInfo(userPlaylists)
+
+    def seek_track(self, position_ms, device_id=None, *args, **kwargs):
+        self._loginIfNeeded()
+        spotapi.player.Player(self.user_auth).seek_to(position_ms)
+        return True
+
+    def next_track(self, device_id=None, *args, **kwargs):
+        self._loginIfNeeded()
+        spotapi.player.Player(self.user_auth).skip_next()
+        return True
+
+    def previous_track(self, device_id=None, *args, **kwargs):
+        self._loginIfNeeded()
+        spotapi.player.Player(self.user_auth).skip_prev()
+        return True
+
+    def pause_playback(self, device_id=None, *args, **kwargs):
+        self._loginIfNeeded()
+        spotapi.player.Player(self.user_auth).pause()
+        return True
+    
+    def start_playback(self, device_id=None, *args, **kwargs):
+        self._loginIfNeeded()
+        spotapi.player.Player(self.user_auth).resume()
+        return True
+
+    def current_user_saved_tracks_add(self, *args, **kwargs):
         return
 
-    def current_user_playlists(self, limit=50, offset=0):
-        """Get current user playlists without required getting his profile
-        Parameters:
-            - limit  - the number of items to return
-            - offset - the index of the first item to return
-        """
-        pass
+    def current_user_saved_tracks_delete(self, *args, **kwargs):
+        return
+
+    def playlist_remove_all_occurrences_of_items(self, *args, **kwargs):
+        return
+
+    def playlist_add_items(self, *args, **kwargs):
+        return
 
     def current_user_followed_artists(self, limit=-1, offset=0, *args, **kwargs):
-        self._next = lambda: self.current_user_followed_artists(
-            limit=limit, offset=offset + limit
-        )
         return
 
     def me(self):
@@ -412,7 +435,11 @@ class Spotify:
         userInfo = spotapi.user.User(self.user_auth).get_user_info()
         return SpotifyFormatter.formatMe(userInfo)
 
+    def current_user(self):
+        return self.me()
+
 if __name__ == "__main__":
+    import time
     import json
     import os
 
@@ -461,30 +488,40 @@ if __name__ == "__main__":
     sp = Spotify()
     sp.login()
     # player = spotapi.player.Player(sp.user_auth)
+    spotapi.player.Player(sp.user_auth).state.play_origin.device_identifier = True
     status = spotapi.player.PlayerStatus(sp.user_auth)
-    # a = spotapi.player.Player(sp.user_auth)
+    a = spotapi.player.Player(sp.user_auth)
     sp.startRecentlyPlayedListener()
-    if pysole:
-        pysole.probe(runRemainingCode=True, printStartupCode=True)
 
-    save(status.state.__dict__, "status.json")
-    artist = sp.artist("3Bd1cgCjtCI32PYvDC3ynO")
-    save(artist, "artist.json")
-    artistAlbums = sp.artist_albums("3Bd1cgCjtCI32PYvDC3ynO", include_groups="album,single,compilation")
-    save(artistAlbums, "artist_albums.json")
-    playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
-    save(playlist, "playlist.json")
-    track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
-    save(track, "track.json")
-    album = sp.album("4m2880jivSbbyEGAKfITCa")
-    save(album, "album.json")
-    albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
-    save(albumTracks, "album_tracks.json")
-    search = sp.search("Blinding Light - Weekend")
-    save(search, "search.json")
-    
-    saved = sp.current_user_saved_tracks()
-    save(saved, "saved_tracks.json")
-    me = sp.me()
-    save(me, "me.json")
-    self = sp
+    # sp.seek_track(5000)
+    # sp.next_track()
+    # time.sleep(3)
+    # sp.previous_track()
+
+    # current_playback = sp.current_playback()
+    # save(current_playback, "current_playback.json")
+    current_user_playlists = sp.current_user_playlists()
+    save(current_user_playlists, "current_user_playlists.json")
+    # current_user_saved_tracks_contains = sp.current_user_saved_tracks_contains("67Hna13dNDkZvBpTXRIaOJ")
+    # save([current_user_saved_tracks_contains], "current_user_saved_tracks_contains.json")
+
+    # if pysole:
+    #     pysole.probe(runRemainingCode=True, printStartupCode=True)
+
+    # save(status.state.__dict__, "status.json")
+    # artist = sp.artist("3Bd1cgCjtCI32PYvDC3ynO")
+    # save(artist, "artist.json")
+    # artistAlbums = sp.artist_albums("3Bd1cgCjtCI32PYvDC3ynO", include_groups="album,single,compilation")
+    # save(artistAlbums, "artist_albums.json")
+    # playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
+    # save(playlist, "playlist.json")
+    # track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
+    # save(track, "track.json")
+    # album = sp.album("4m2880jivSbbyEGAKfITCa")
+    # save(album, "album.json")
+    # albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
+    # save(albumTracks, "album_tracks.json")
+    # search = sp.search("Blinding Light - Weekend")
+    # save(search, "search.json")
+
+    # self = sp

@@ -125,6 +125,8 @@ class SpotifyFormatter:
             playlist["images"] = playlist["images"]["items"][-1]["sources"]
         except:
             playlist["images"] = []
+        if "id" not in playlist:
+            playlist["id"] = playlist["uri"].removeprefix("spotify:playlist:")
         return playlist
 
     @staticmethod
@@ -149,29 +151,6 @@ class SpotifyFormatter:
             allTracks.append(meta)
 
         return allTracks
-
-    @staticmethod
-    def formatRecentlyPlayedItem(track, played_at, context_uri):
-        return {
-            "track": track,
-            "played_at": played_at,
-            "context": {
-                "type": "unknown",
-                "uri": context_uri or "",
-                "external_urls": {"spotify": ""},
-                "href": "",
-            },
-        }
-
-    @staticmethod
-    def initialRecentlyPlayed(limit=20):
-        return {
-            "items": [],
-            "limit": limit,
-            "href": f"https://api.spotify.com/v1/me/player/recently-played?limit={limit}",
-            "cursors": {"after": None, "before": None},
-            "next": None,
-        }
 
     @staticmethod
     def formatMe(userInfo, userPlan=None):
@@ -209,7 +188,25 @@ class SpotifyFormatter:
         }
 
     @staticmethod
-    def addChunkInfo(items, total, limit, offset, *args):
+    def formatContext(contextUri):
+        contextId = contextUri.split(":")[-1]
+        contextType = contextUri.split(":")[1]
+        context = {
+            "type": contextType,
+            "href": f"https://api.spotify.com/v1/{contextType}s/{contextId}",
+            "external_urls": {
+                "spotify": f"https://open.spotify.com/{contextType}/{contextId}"
+            },
+            "uri": contextUri,
+        }
+        return context
+
+    @staticmethod
+    def addChunkInfo(items, total=-1, limit=-1, offset=0, *args):
+        if total == -1:
+            total = len(items)
+        if limit == -1:
+            limit = total
         return {
             "items": items,
             "total": total,

@@ -31,7 +31,16 @@ Currently implemented:
 *   `album_tracks()`
 *   `current_user_recently_played()` - must first run startRecentlyPlayedListener
 *   `current_user_saved_tracks()`
+*   `current_user_saved_tracks_contains()`
+*   `current_user_playlists()`
+*   `current_playback()`
+*   `current_user()`
 *   `me()`
+*   `seek_track()`
+*   `next_track()`
+*   `previous_track()`
+*   `start_playback()`
+*   `pause_playback()`
 - - -
 
 ## Installation

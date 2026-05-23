@@ -3,6 +3,7 @@
 build/
 dist/
 Data/
+spotapi/
 ignore
 __pycache__
 data.py
