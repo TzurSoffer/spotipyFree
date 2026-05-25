@@ -404,7 +404,7 @@ class Spotify:
         metadata["context"] = context
         metadata["is_playing"] = state.is_playing
         metadata["is_paused"] = state.is_paused
-        metadata["progress_ms"] = 0
+        metadata["progress_ms"] = -1
         return metadata
 
     def current_user_playlists(self, limit=-1, offset=0, *args, **kwargs):
