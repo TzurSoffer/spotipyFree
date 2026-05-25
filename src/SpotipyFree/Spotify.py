@@ -18,10 +18,37 @@ except ImportError:
 spotapi.client._FALLBACK_SECRET = (
     61,
     bytearray(
-        [44,55,47,42,70,40,34,114,76,74,50,111,120,97,75,76,94,102,43,69,49,120,118,80,64,78]
+        [
+            44,
+            55,
+            47,
+            42,
+            70,
+            40,
+            34,
+            114,
+            76,
+            74,
+            50,
+            111,
+            120,
+            97,
+            75,
+            76,
+            94,
+            102,
+            43,
+            69,
+            49,
+            120,
+            118,
+            80,
+            64,
+            78,
+        ]
     ),
 )
-spotapi.client.Logger = spotapi.utils.NoopLogger
+
 
 class Spotify:
     """
@@ -177,7 +204,6 @@ class Spotify:
         allTracks = SpotifyFormatter.formatTracks(allTracks)
 
         return SpotifyFormatter.addChunkInfo(allTracks)
-        # return({"items": allTracks, "next": False})
 
     def artist(self, artistId, *args, **kwargs):
         if self.isUrl(artistId):
@@ -231,9 +257,7 @@ class Spotify:
         ]
         return SpotifyFormatter.formatPlaylist(playlist)
 
-    async def playlist_items_async(
-        self, playlistId, *args, **kwargs
-    ):
+    async def playlist_items_async(self, playlistId, *args, **kwargs):
         if self.isUrl(playlistId):
             playlistId = self.urlToId(playlistId)
 
@@ -313,9 +337,7 @@ class Spotify:
                 meta["external_ids"] = {"isrc": self._getIsrc(meta["track_id"])}
             tracks.append(meta)
 
-        return {
-            "tracks": SpotifyFormatter.addChunkInfo(tracks)
-        }
+        return {"tracks": SpotifyFormatter.addChunkInfo(tracks)}
 
     def current_user_saved_tracks(self, limit=-1, offset=0, *args, **kwargs):
         self._loginIfNeeded()
@@ -343,7 +365,9 @@ class Spotify:
         )
         return result
 
-    def current_user_saved_tracks_contains(self, trackId, raiseOnLast=False, default=False):
+    def current_user_saved_tracks_contains(
+        self, trackId, raiseOnLast=False, default=False
+    ):
         self._loginIfNeeded()
         pl = spotapi.playlist.PrivatePlaylist(self.user_auth).paginate_saved_tracks()
         for raws in pl:
@@ -382,7 +406,7 @@ class Spotify:
             plId = res["item"]["_uri"].removeprefix("spotify:playlist:")
             try:
                 pl = self.playlist(plId)
-            except: #< private playlist that can't be accessed by self.playlist
+            except:  #< private playlist that can't be accessed by self.playlist
                 pl = SpotifyFormatter.formatPlaylist(data)
             userPlaylists.append(pl)
         return SpotifyFormatter.addChunkInfo(userPlaylists)
@@ -406,7 +430,7 @@ class Spotify:
         self._loginIfNeeded()
         spotapi.player.Player(self.user_auth).pause()
         return True
-    
+
     def start_playback(self, device_id=None, *args, **kwargs):
         self._loginIfNeeded()
         spotapi.player.Player(self.user_auth).resume()
@@ -438,6 +462,7 @@ class Spotify:
     def current_user(self):
         return self.me()
 
+
 if __name__ == "__main__":
     import time
     import json
@@ -455,40 +480,43 @@ if __name__ == "__main__":
         If an object isn't serializable, fall back to obj.__dict__.
         """
 
-        # Already JSON‑safe types
         if isinstance(obj, (str, int, float, bool)) or obj is None:
             return obj
 
-        # Convert lists/tuples/sets
         if isinstance(obj, (list, tuple, set)):
             return [makeJsonSafe(x) for x in obj]
 
-        # Convert dicts
         if isinstance(obj, dict):
             return {str(k): makeJsonSafe(v) for k, v in obj.items()}
 
-        # Try serializing directly
         try:
             json.dumps(obj)
             return obj
         except Exception:
             pass
 
-        # Try using __dict__
-        if hasattr(obj, "__dict__"):
+        if hasattr(obj, "__dict__"):            #< spotapi uses weird objects, convert them to dicts
             return makeJsonSafe(obj.__dict__)
 
         # Last resort: string representation
         return str(obj)
 
     def save(jsonData, name="saved.json"):
-        with open(os.path.join(os.path.dirname(os.path.realpath(__file__)), "../../", "Data", "Output", name), "w") as f:
+        with open(
+            os.path.join(
+                os.path.dirname(os.path.realpath(__file__)),
+                "../../",
+                "Data",
+                "Output",
+                name,
+            ),
+            "w",
+        ) as f:
             json.dump(makeJsonSafe(jsonData), f, indent=4)
 
     sp = Spotify()
     sp.login()
-    # player = spotapi.player.Player(sp.user_auth)
-    spotapi.player.Player(sp.user_auth).state.play_origin.device_identifier = True
+    player = spotapi.player.Player(sp.user_auth)
     status = spotapi.player.PlayerStatus(sp.user_auth)
     a = spotapi.player.Player(sp.user_auth)
     sp.startRecentlyPlayedListener()
@@ -502,8 +530,12 @@ if __name__ == "__main__":
     save(current_playback, "current_playback.json")
     current_user_playlists = sp.current_user_playlists()
     save(current_user_playlists, "current_user_playlists.json")
-    current_user_saved_tracks_contains = sp.current_user_saved_tracks_contains("67Hna13dNDkZvBpTXRIaOJ")
-    save([current_user_saved_tracks_contains], "current_user_saved_tracks_contains.json")
+    current_user_saved_tracks_contains = sp.current_user_saved_tracks_contains(
+        "67Hna13dNDkZvBpTXRIaOJ"
+    )
+    save(
+        [current_user_saved_tracks_contains], "current_user_saved_tracks_contains.json"
+    )
 
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)

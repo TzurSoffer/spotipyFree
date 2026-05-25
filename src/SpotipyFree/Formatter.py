@@ -30,13 +30,19 @@ class SpotifyFormatter:
         return meta
 
     @staticmethod
-    def formatTrack(track, formattedArtists, songId=None):
+    def formatTrack(track, formattedArtists, songId=None, album=[]):
         if songId == None:
             songId = track["uri"].removeprefix("spotify:track:")
-        try:
-            albumTracks = track["albumOfTrack"]["tracks"]["items"]
-        except:
-            albumTracks = []
+
+        if album == []:
+            try:
+                album = SpotifyFormatter.formatAlbum(
+                    track["albumOfTrack"],
+                    formattedArtists,
+                    tracks=track["albumOfTrack"]["tracks"]["items"],
+                )
+            except:
+                pass
         meta = {
             "name": track["name"],
             "track_id": songId,
@@ -45,16 +51,24 @@ class SpotifyFormatter:
             "track_number": track.get("trackNumber", 1),
             "duration_ms": track["duration"]["totalMilliseconds"],
             "artists": formattedArtists,
-            "album": SpotifyFormatter.formatAlbum(
-                track["albumOfTrack"], formattedArtists, tracks=albumTracks
-            ),
+            "album": album,
             "explicit": track["contentRating"]["label"] == "EXPLICIT",
             "external_urls": {"spotify": "https://open.spotify.com/track/" + songId},
-            "popularity": 10,  # < needs fixing
+            "popularity": 10,  #< needs fixing
             "type": "track",
             "external_ids": {"isrc": ""},
         }
         return meta
+
+    @staticmethod
+    def formatTracks(tracks):
+        return [
+            SpotifyFormatter.formatTrack(
+                track["track"],
+                SpotifyFormatter.formatArtists(track["track"]["artists"]["items"]),
+            )
+            for track in tracks
+        ]
 
     @staticmethod
     def formatArtist(artist):
@@ -110,7 +124,9 @@ class SpotifyFormatter:
         album["release_date"] = date["isoString"].split("T")[0]
         album["album_type"] = "album"
         album["copyrights"] = [{"text": "", "type": ""}]
-        album["external_urls"] = {"spotify": f"https://open.spotify.com/album/{albumId}"}
+        album["external_urls"] = {
+            "spotify": f"https://open.spotify.com/album/{albumId}"
+        }
         album["genres"] = [""]
         return album
 
@@ -130,61 +146,27 @@ class SpotifyFormatter:
         return playlist
 
     @staticmethod
-    def formatTracks(tracks):
-        allTracks = []
-        for track in tracks:
-            track = track["track"]
-            trackId = track["uri"].removeprefix("spotify:track:")
-            url = "https://open.spotify.com/track/" + trackId
-            meta = {
-                "name": track["name"],
-                "id": trackId,
-                "song_id": trackId,
-                "url": url,
-                "external_urls": {"spotify": url},
-                "duration_ms": track["duration"]["totalMilliseconds"],
-                "disc_number": track["discNumber"],
-                "track_number": track["trackNumber"],
-                "artists": SpotifyFormatter.formatArtists(track["artists"]["items"]),
-                "explicit": track["contentRating"]["label"] == "EXPLICIT",
-            }
-            allTracks.append(meta)
-
-        return allTracks
-
-    @staticmethod
     def formatMe(userInfo, userPlan=None):
         profile = userInfo.get("profile", {})
         userId = profile.get("email")
         return {
             "country": profile.get("country"),
-            "display_name": profile.get("username"), #< wrong this is the id, not username
+            "display_name": profile.get(
+                "username"
+            ),  #< wrong this is the id, not username
             "email": userId,
             "explicit_content": {"filter_enabled": False, "filter_locked": False},
-            "external_urls": {
-                "spotify": f"https://open.spotify.com/user/{userId}"
-            },
-            "followers": {
-                "href": None,
-                "total": -1
-            },
+            "external_urls": {"spotify": f"https://open.spotify.com/user/{userId}"},
+            "followers": {"href": None, "total": -1},
             "href": f"https://api.spotify.com/v1/users/{userId}",
             "id": userId,
             "images": [
-                {
-                    "height": 300,
-                    "url": "https://i.scdn.co/image/null",
-                    "width": 300
-                },
-                {
-                    "height": 64,
-                    "url": "https://i.scdn.co/image/null",
-                    "width": 64
-                }
+                {"height": 300, "url": "https://i.scdn.co/image/null", "width": 300},
+                {"height": 64, "url": "https://i.scdn.co/image/null", "width": 64},
             ],
             "product": "null",
             "type": "user",
-            "uri": f"spotify:user:{userId}"
+            "uri": f"spotify:user:{userId}",
         }
 
     @staticmethod
