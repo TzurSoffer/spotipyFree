@@ -70,6 +70,8 @@ class Spotify:
         self._next = None
         self.lastPlayedManager = None
         self.recentlyPlayed = deque(maxlen=50)  # type: ignore
+        self.playerStatus = None
+        self.player = None
         if cookiesFile != None:
             self.login(cookiesFile)
 
@@ -135,6 +137,16 @@ class Spotify:
         if self.isLoggedIn():
             return
         self.login()
+
+    def _createPlayerIfNeeded(self):
+        self._loginIfNeeded()
+        if self.player == None:
+            self.player = spotapi.player.Player(self.user_auth)
+
+    def _createPlayerStatusIfNeeded(self):
+        self._loginIfNeeded()
+        if self.playerStatus == None:
+            self.playerStatus = spotapi.player.PlayerStatus(self.user_auth)
 
     def _addToRecentlyPlayed(self, trackUri, playedAt, contextUri):
         track = self.track(trackUri.split(":")[-1])
@@ -383,8 +395,8 @@ class Spotify:
         return list(self.recentlyPlayed)
 
     def current_playback(self, *args, **kwargs):
-        self._loginIfNeeded()
-        state = spotapi.player.PlayerStatus(self.user_auth).state
+        self._createPlayerStatusIfNeeded()
+        state = self.playerStatus.state
         track = self.track(state.track.uri.removeprefix("spotify:track:"))
         context = SpotifyFormatter.formatContext(state.context_uri)
         metadata = SpotifyFormatter.addChunkInfo(track)
@@ -412,28 +424,28 @@ class Spotify:
         return SpotifyFormatter.addChunkInfo(userPlaylists)
 
     def seek_track(self, position_ms, device_id=None, *args, **kwargs):
-        self._loginIfNeeded()
-        spotapi.player.Player(self.user_auth).seek_to(position_ms)
+        self._createPlayerIfNeeded()
+        self.player.seek_to(position_ms)
         return True
 
     def next_track(self, device_id=None, *args, **kwargs):
-        self._loginIfNeeded()
-        spotapi.player.Player(self.user_auth).skip_next()
+        self._createPlayerIfNeeded()
+        self.player.skip_next()
         return True
 
     def previous_track(self, device_id=None, *args, **kwargs):
-        self._loginIfNeeded()
-        spotapi.player.Player(self.user_auth).skip_prev()
+        self._createPlayerIfNeeded()
+        self.player.skip_prev()
         return True
 
     def pause_playback(self, device_id=None, *args, **kwargs):
-        self._loginIfNeeded()
-        spotapi.player.Player(self.user_auth).pause()
+        self._createPlayerIfNeeded()
+        self.player.pause()
         return True
 
     def start_playback(self, device_id=None, *args, **kwargs):
-        self._loginIfNeeded()
-        spotapi.player.Player(self.user_auth).resume()
+        self._createPlayerIfNeeded()
+        self.player.resume()
         return True
 
     def current_user_saved_tracks_add(self, *args, **kwargs):
@@ -516,9 +528,9 @@ if __name__ == "__main__":
 
     sp = Spotify()
     sp.login()
-    player = spotapi.player.Player(sp.user_auth)
-    status = spotapi.player.PlayerStatus(sp.user_auth)
-    a = spotapi.player.Player(sp.user_auth)
+    #player = spotapi.player.Player(sp.user_auth)
+    #status = spotapi.player.PlayerStatus(sp.user_auth)
+    # save(status.state.__dict__, "status.json")
     sp.startRecentlyPlayedListener()
 
     sp.seek_track(5000)
@@ -540,7 +552,6 @@ if __name__ == "__main__":
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)
 
-    save(status.state.__dict__, "status.json")
     artist = sp.artist("3Bd1cgCjtCI32PYvDC3ynO")
     save(artist, "artist.json")
     artistAlbums = sp.artist_albums("3Bd1cgCjtCI32PYvDC3ynO", include_groups="album,single,compilation")

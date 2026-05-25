@@ -36,10 +36,12 @@ class SpotifyFormatter:
 
         if album == []:
             try:
+                albumMeta = track["albumOfTrack"]
+                tracks = albumMeta.get("tracks", {}).get("items", [])
                 album = SpotifyFormatter.formatAlbum(
-                    track["albumOfTrack"],
+                    albumMeta,
                     formattedArtists,
-                    tracks=track["albumOfTrack"]["tracks"]["items"],
+                    tracks=tracks,
                 )
             except:
                 pass
