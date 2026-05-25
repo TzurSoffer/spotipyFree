@@ -186,16 +186,20 @@ class SpotifyFormatter:
         return context
 
     @staticmethod
-    def addChunkInfo(items, total=-1, limit=-1, offset=0, *args):
+    def addChunkInfo(items, total=-1, limit=-1, offset=0, mode="multi", *args):
         if total == -1:
             total = len(items)
         if limit == -1:
             limit = total
+        if mode == "multi":
+            return {
+                "items": items,
+                "total": total,
+                "limit": limit,
+                "offset": offset,
+                "next": False,
+                "previous": offset - limit if offset - limit >= 0 else None,
+            }
         return {
-            "items": items,
-            "total": total,
-            "limit": limit,
-            "offset": offset,
-            "next": False,
-            "previous": offset - limit if offset - limit >= 0 else None,
+            "item": items
         }

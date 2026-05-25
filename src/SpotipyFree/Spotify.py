@@ -378,18 +378,19 @@ class Spotify:
         return result
 
     def current_user_saved_tracks_contains(
-        self, trackId, raiseOnLast=False, default=False
+        self, tracks
     ):
         self._loginIfNeeded()
         pl = spotapi.playlist.PrivatePlaylist(self.user_auth).paginate_saved_tracks()
-        for raws in pl:
-            for raw in raws["items"]:
-                songId = raw["track"]["_uri"].removeprefix("spotify:track:")
-                if songId == trackId:
-                    return True
-        if raiseOnLast:
-            raise Exception("Track not found in saved tracks")
-        return default
+        results = []
+        for trackId in tracks:
+            for raws in pl:
+                for raw in raws["items"]:
+                    songId = raw["track"]["_uri"].removeprefix("spotify:track:")
+                    if songId == trackId:
+                        results.append(True)
+            results.append(False)
+        return results
 
     def current_user_recently_played(self, limit=50, after=None, before=None):
         return list(self.recentlyPlayed)
@@ -399,7 +400,7 @@ class Spotify:
         state = self.playerStatus.state
         track = self.track(state.track.uri.removeprefix("spotify:track:"))
         context = SpotifyFormatter.formatContext(state.context_uri)
-        metadata = SpotifyFormatter.addChunkInfo(track)
+        metadata = SpotifyFormatter.addChunkInfo(track, mode="single")
         metadata["context"] = context
         metadata["is_playing"] = state.is_playing
         metadata["is_paused"] = state.is_paused
