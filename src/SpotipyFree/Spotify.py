@@ -402,8 +402,7 @@ class Spotify:
         context = SpotifyFormatter.formatContext(state.context_uri)
         metadata = SpotifyFormatter.addChunkInfo(track, mode="single")
         metadata["context"] = context
-        metadata["is_playing"] = state.is_playing
-        metadata["is_paused"] = state.is_paused
+        metadata["is_playing"] = not state.is_paused
         metadata["progress_ms"] = -1
         return metadata
 
