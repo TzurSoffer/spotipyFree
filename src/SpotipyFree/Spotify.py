@@ -342,17 +342,9 @@ class Spotify:
             track["external_ids"] = {"isrc": self._getIsrc(track["track_id"])}
         return track
 
-    def audio_features(self, trackId, *args, **kwargs):
-        if self.isUrl(trackId):
-            trackId = self.urlToId(trackId)
-
-        session = requests.Session()
-
-        session.headers.update({
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
-                        "AppleWebKit/537.36 (KHTML, like Gecko) "
-                        "Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0"
-        })
+    def audio_features(self, trackIds, *args, **kwargs):
+        if type(trackIds) == str:
+            trackIds = [trackIds]
 
         headers = {
             "authority": "www.chosic.com",
@@ -377,16 +369,34 @@ class Spotify:
             "x-requested-with": "XMLHttpRequest"
         }
 
-        url = f"https://www.chosic.com/api/tools/audio-features/{trackId}"
+        results = []
+        for trackId in trackIds:
+            if self.isUrl(trackId):
+                trackId = self.urlToId(trackId)
 
-        try:
-            response = session.get(url, headers=headers)
-            if response.status_code != 200:
-                return [None]
-            return [response.json()]
-        except Exception as e:
-            print(f"Could not fetch data from www.chosic.com: {e}")
-            return [None]
+            session = requests.Session()
+
+            session.headers.update({
+                "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                            "AppleWebKit/537.36 (KHTML, like Gecko) "
+                            "Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0"
+            })
+
+            url = f"https://www.chosic.com/api/tools/audio-features/{trackId}"
+
+            try:
+                response = session.get(url, headers=headers)
+                if response.status_code != 200:
+                    print(f"www.chosic.com returned bad status code: {response.status_code}, you might have been blocked")
+                    results.append(None)
+                    continue
+                results.append(response.json())
+                time.sleep(1)
+            except Exception as e:
+                print(f"Could not fetch data from www.chosic.com: {e}")
+                results.append(None)
+
+        return(results)
 
     def search(self, query, type="track", *args, **kwargs):
         pages = spotapi.Public().song_search(query)
@@ -582,6 +592,8 @@ if __name__ == "__main__":
             json.dump(makeJsonSafe(jsonData), f, indent=4)
 
     sp = Spotify()
+    res = sp.audio_features(["https://open.spotify.com/track/4tyjNEHKos3lZPYAfTiMKH?si=b6fd0ef9ebca4a0c", "https://open.spotify.com/track/67Hna13dNDkZvBpTXRIaOJ?si=e8268aa17dc44271"])
+    pysole.probe()
     sp.login()
     #player = spotapi.player.Player(sp.user_auth)
     #status = spotapi.player.PlayerStatus(sp.user_auth)
