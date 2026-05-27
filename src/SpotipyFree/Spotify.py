@@ -98,6 +98,9 @@ class Spotify:
                 )
 
     def getTrackFromGroover(self, songId, session=None):
+        # can also use GET "https://tools4music.com/api/spotify/isrc?id=SongID" or "https://www.chosic.com/api/tools/tracks/SongID"
+        # returns {isrc: "GBAAA9800322", name: "Teardrop", artists: ["Massive Attack", "Elizabeth Fraser"],…}
+
         url = "https://groover.co/core/distantapi/spotify/getdata/"
 
         headers = {
@@ -339,6 +342,52 @@ class Spotify:
             track["external_ids"] = {"isrc": self._getIsrc(track["track_id"])}
         return track
 
+    def audio_features(self, trackId, *args, **kwargs):
+        if self.isUrl(trackId):
+            trackId = self.urlToId(trackId)
+
+        session = requests.Session()
+
+        session.headers.update({
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0"
+        })
+
+        headers = {
+            "authority": "www.chosic.com",
+            "method": "GET",
+            "path": "/api/tools/audio-features/67Hna13dNDkZvBpTXRIaOJ",
+            "scheme": "https",
+            "accept": "application/json, text/javascript, */*; q=0.01",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "en-US,en;q=0.9",
+            "app": "playlist_generator",
+            "cache-control": "no-cache",
+            "dnt": "1",
+            "pragma": "no-cache",
+            "priority": "u=1, i",
+            "referer": "https://www.chosic.com/song-bpm-key-finder/",
+            "sec-ch-ua": '"Chromium";v="148", "Microsoft Edge";v="148", "Not/A)Brand";v="99"',
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": '"Windows"',
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-origin",
+            "x-requested-with": "XMLHttpRequest"
+        }
+
+        url = f"https://www.chosic.com/api/tools/audio-features/{trackId}"
+
+        try:
+            response = session.get(url, headers=headers)
+            if response.status_code != 200:
+                return [None]
+            return [response.json()]
+        except Exception as e:
+            print(f"Could not fetch data from www.chosic.com: {e}")
+            return [None]
+
     def search(self, query, type="track", *args, **kwargs):
         pages = spotapi.Public().song_search(query)
         for results in pages:  #< save first page
@@ -531,8 +580,6 @@ if __name__ == "__main__":
             "w",
         ) as f:
             json.dump(makeJsonSafe(jsonData), f, indent=4)
-
-    pysole.probe()
 
     sp = Spotify()
     sp.login()
