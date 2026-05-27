@@ -97,7 +97,7 @@ class Spotify:
                     "aiohttp and asyncio are required for fetching ISRCs. Please install them to use this feature."
                 )
 
-    def _getIsrc(self, songId, session=None):
+    def getTrackFromGroover(self, songId, session=None):
         url = "https://groover.co/core/distantapi/spotify/getdata/"
 
         headers = {
@@ -115,11 +115,17 @@ class Spotify:
             else:
                 response = requests.post(url, headers=headers, json=payload)
                 if response.status_code != 200:
-                    return ""
-                return response.json()["external_ids"]["isrc"]
+                    return {}
+                return response.json()
         except Exception as e:
             print("Could not fetch ISRC:", e)
-            return ""
+            return {}
+
+    def _getIsrc(self, songId, session=None):
+        data = self.getTrackFromGroover(songId, session)
+        if data == {}:
+            return data
+        return data["external_ids"]["isrc"]
 
     async def _getIsrc_async(self, session, songId):
         try:
@@ -525,6 +531,8 @@ if __name__ == "__main__":
             "w",
         ) as f:
             json.dump(makeJsonSafe(jsonData), f, indent=4)
+
+    pysole.probe()
 
     sp = Spotify()
     sp.login()
