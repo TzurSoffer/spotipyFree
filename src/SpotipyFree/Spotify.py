@@ -121,7 +121,7 @@ class Spotify:
                     return {}
                 return response.json()
         except Exception as e:
-            print("Could not fetch ISRC:", e)
+            print("Could not fetch data:", e)
             return {}
 
     def _getIsrc(self, songId, session=None):
@@ -259,7 +259,7 @@ class Spotify:
 
         merged = []
         for key, albumsList in discog.items():
-            key = key.removesuffix("s")
+            key = key.removesuffix("s")  #< ex: spotipy uses item while the backend api uses items 
             if key in allowed:
                 for albums in albumsList.get("items", []):
                     for album in albums["releases"]["items"]:
@@ -349,7 +349,7 @@ class Spotify:
         headers = {
             "authority": "www.chosic.com",
             "method": "GET",
-            "path": "/api/tools/audio-features/67Hna13dNDkZvBpTXRIaOJ",
+            "path": None,
             "scheme": "https",
             "accept": "application/json, text/javascript, */*; q=0.01",
             "accept-encoding": "gzip, deflate, br, zstd",
@@ -376,11 +376,13 @@ class Spotify:
 
             session = requests.Session()
 
+            session.cookies.set('pll_language', 'en')
             session.headers.update({
                 "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
                             "AppleWebKit/537.36 (KHTML, like Gecko) "
                             "Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0"
             })
+            headers["path"] = f"/api/tools/audio-features/{trackId}"
 
             url = f"https://www.chosic.com/api/tools/audio-features/{trackId}"
 
@@ -591,37 +593,44 @@ if __name__ == "__main__":
         ) as f:
             json.dump(makeJsonSafe(jsonData), f, indent=4)
 
+    def testPlayer(sp):
+        sp._createPlayerIfNeeded()
+        sp._createPlayerStatusIfNeeded()
+        player = sp.player
+        status = sp.playerStatus
+
+        save(status.state.__dict__, "status.json")
+        sp.startRecentlyPlayedListener()
+
+        sp.seek_track(5000)
+        sp.next_track()
+        time.sleep(3)
+        sp.previous_track()
+
+        current_playback = sp.current_playback()
+        save(current_playback, "current_playback.json")
+        current_user_playlists = sp.current_user_playlists()
+        save(current_user_playlists, "current_user_playlists.json")
+        current_user_saved_tracks_contains = sp.current_user_saved_tracks_contains(
+            "67Hna13dNDkZvBpTXRIaOJ"
+        )
+        save(
+            [current_user_saved_tracks_contains], "current_user_saved_tracks_contains.json"
+        )
+        return player, status
+
     sp = Spotify()
-    res = sp.audio_features(["https://open.spotify.com/track/4tyjNEHKos3lZPYAfTiMKH?si=b6fd0ef9ebca4a0c", "https://open.spotify.com/track/67Hna13dNDkZvBpTXRIaOJ?si=e8268aa17dc44271"])
-    pysole.probe()
+    # res = sp.audio_features(["https://open.spotify.com/track/4tyjNEHKos3lZPYAfTiMKH?si=b6fd0ef9ebca4a0c", "https://open.spotify.com/track/67Hna13dNDkZvBpTXRIaOJ?si=e8268aa17dc44271"])
     sp.login()
-    #player = spotapi.player.Player(sp.user_auth)
-    #status = spotapi.player.PlayerStatus(sp.user_auth)
-    # save(status.state.__dict__, "status.json")
-    sp.startRecentlyPlayedListener()
+    player, status = testPlayer()
 
-    sp.seek_track(5000)
-    sp.next_track()
-    time.sleep(3)
-    sp.previous_track()
-
-    current_playback = sp.current_playback()
-    save(current_playback, "current_playback.json")
-    current_user_playlists = sp.current_user_playlists()
-    save(current_user_playlists, "current_user_playlists.json")
-    current_user_saved_tracks_contains = sp.current_user_saved_tracks_contains(
-        "67Hna13dNDkZvBpTXRIaOJ"
-    )
-    save(
-        [current_user_saved_tracks_contains], "current_user_saved_tracks_contains.json"
-    )
 
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)
 
     artist = sp.artist("3Bd1cgCjtCI32PYvDC3ynO")
     save(artist, "artist.json")
-    artistAlbums = sp.artist_albums("3Bd1cgCjtCI32PYvDC3ynO", include_groups="album,single,compilation")
+    artistAlbums = sp.artist_albums("3Bd1cgCjtCI32PYvDC3ynO", include_groups="single")#include_groups="album,single,compilation")
     save(artistAlbums, "artist_albums.json")
     playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
     save(playlist, "playlist.json")

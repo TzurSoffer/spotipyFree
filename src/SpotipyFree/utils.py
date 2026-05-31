@@ -22,13 +22,14 @@ def getConfigFolder() -> Path:
     return configPath
 
 
-def getCookiesFile() -> str:
+def getCookiesFile(cookiesFile=None) -> str:
     """
     Get the path to the cookies file
     """
 
-    configFolder = getConfigFolder()
-    cookiesFile = configFolder / "cookies.json"
+    if cookiesFile == None:
+        configFolder = getConfigFolder()
+        cookiesFile = configFolder / "cookies.json"
 
     if not cookiesFile.exists():
         with open(cookiesFile, "w") as f:
