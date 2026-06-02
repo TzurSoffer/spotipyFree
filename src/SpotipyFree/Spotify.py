@@ -1,5 +1,6 @@
 import json
 import asyncio
+import time
 import requests
 import spotapi  # type: ignore
 from collections import deque
@@ -157,11 +158,11 @@ class Spotify:
         if self.playerStatus == None:
             self.playerStatus = spotapi.player.PlayerStatus(self.user_auth)
 
-    def _addToRecentlyPlayed(self, trackUri, playedAt, contextUri):
+    def _addToRecentlyPlayed(self, trackUri, playedAt, contextUri, timePlayed):
         track = self.track(trackUri.split(":")[-1])
         context = SpotifyFormatter.formatContext(contextUri)
         self.recentlyPlayed.append(
-            {"track": track, "played_at": playedAt, "context": context}
+            {"track": track, "played_at": playedAt, "ms_played": timePlayed, "context": context}
         )
 
     def startRecentlyPlayedListener(self):
@@ -183,8 +184,9 @@ class Spotify:
                 with open(cookiesFile, "r") as f:
                     sessions = json.load(f)
                 identifier = sessions[0]["identifier"]
-            except:
-                raise (f"[-] Could not read sessions file")
+            except Exception as e:
+                print("Error loading cookies file:", e)
+                return False
 
             self.user_auth = spotapi.Login.from_saver(saver, cfg, identifier)
         except:
@@ -622,7 +624,7 @@ if __name__ == "__main__":
     sp = Spotify()
     # res = sp.audio_features(["https://open.spotify.com/track/4tyjNEHKos3lZPYAfTiMKH?si=b6fd0ef9ebca4a0c", "https://open.spotify.com/track/67Hna13dNDkZvBpTXRIaOJ?si=e8268aa17dc44271"])
     sp.login()
-    player, status = testPlayer()
+    player, status = testPlayer(sp)
 
 
     if pysole:

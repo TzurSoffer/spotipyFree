@@ -11,23 +11,28 @@ class LastPlayedManger:
         self.login = login
         self.manager = PlayerStatus(login)
         self.lastPLayed = ""
+        self.lastTrackUri = None
+        self.lastPlayedAt = None
+        self.lastContextUri = None
 
     def updateLoop(self, callback):
         while self.run:
             try:
                 timestamp = int(self.manager.state.timestamp) / 1000
                 if self.lastPLayed != self.manager.state.track.uid:
-                    currentTrackUri = self.manager.state.track.uri
-                    playedAt = (
+                    if self.lastTrackUri != None:
+                        timePlayed = max(0, int((time.time() - self.lastPlayedAt.timestamp()) * 1000))
+                        callback(self.lastTrackUri, self.lastPlayedAtText, self.lastContextUri, timePlayed)
+                    self.lastTrackUri = self.manager.state.track.uri
+                    self.lastPlayedAt = (
                         datetime.datetime.fromtimestamp(
                             timestamp, tz=datetime.timezone.utc
                         )
-                        .isoformat()
-                        .replace("+00:00", "Z")
                     )
-                    callback(currentTrackUri, playedAt, self.manager.state.context_uri)
+                    self.lastPlayedAtText = self.lastPlayedAt.isoformat().replace("+00:00", "Z")
+                    self.lastContextUri = self.manager.state.context_uri
                     self.lastPLayed = self.manager.state.track.uid
-                time.sleep(1)
+                time.sleep(3)
             except Exception as e:
                 print(f"Error: {e}")
                 time.sleep(10)

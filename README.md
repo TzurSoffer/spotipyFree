@@ -43,6 +43,8 @@ Currently implemented:
 *   `pause_playback()`
 - - -
 
+There is also a feature to host the api as a Flask endpoint.
+
 ## Installation
 
 Bash
@@ -79,4 +81,22 @@ saved = sp.current_user_saved_tracks()
 me = sp.me()
 ```
 
+## Usage with web API
+### Hosting the web api:
+```bash
+python -c "import SpotipyFree.web as web; web.runWebAPI()"
+```
+### Using the web api
+```python
+import json
+import requests
+
+BASE_URL = "http://127.0.0.1:5000"
+
+url = f"{BASE_URL}/search"
+response = requests.post(url, json=["Blinding Light - Weekend"])
+
+print(f"Status: {response.status_code}")
+print(response.json())
+```
 This project is in no way **affiliated with Spotify**.
