@@ -75,11 +75,6 @@ def validateSpotifyCookies(cookies: dict) -> tuple[bool, list[str]]:
     return True
 
 
-def parseBrowserExport(data: str) -> dict:
-    """Try to parse various browser export formats."""
-    return parseCookieString(data)
-
-
 def saveSession(
     cookies: dict, identifier: str, outputFile: str = "sessions.json"
 ) -> bool:
@@ -147,10 +142,11 @@ def interactiveMode(outputFile="session.json"):
         line = input()
         lines.append(line)
         try:
-            cookies = parseBrowserExport("\n".join(lines))
+            cookies = parseCookieString("\n".join(lines))
             if validateSpotifyCookies(cookies):
                 break
-        except:
+        except Exception as e:
+            print(f"Error parsing cookie string: {e}")
             pass
 
     print(f"[+] Saved session with {len(cookies)} cookies:")

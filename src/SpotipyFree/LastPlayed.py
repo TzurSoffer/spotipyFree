@@ -34,7 +34,8 @@ class LastPlayedManger:
                     self.lastPLayed = self.manager.state.track.uid
                 time.sleep(3)
             except Exception as e:
-                print(f"Error: {e}")
+                print(f"[SpotipyFree] Error in Recently Played: {e}")
+                self.manager = PlayerStatus(self.login)
                 time.sleep(10)
 
     def start(self, callback):
