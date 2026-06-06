@@ -35,8 +35,11 @@ class LastPlayedManger:
                 time.sleep(3)
             except Exception as e:
                 print(f"[SpotipyFree] Error in Recently Played: {e}")
-                self.manager = PlayerStatus(self.login)
                 time.sleep(10)
+                try:
+                    self.manager.reconnect()
+                except:
+                    print(f"[SpotipyFree] Listener stopped due to websocket disconnection. To reconnect, you must use run pip uninstall spotAPI and then pip install git+https://github.com/TzurSoffer/SpotAPI/")
 
     def start(self, callback):
         self.run = True

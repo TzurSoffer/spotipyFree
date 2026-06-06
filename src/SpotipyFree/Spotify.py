@@ -624,11 +624,14 @@ if __name__ == "__main__":
     sp = Spotify()
     # res = sp.audio_features(["https://open.spotify.com/track/4tyjNEHKos3lZPYAfTiMKH?si=b6fd0ef9ebca4a0c", "https://open.spotify.com/track/67Hna13dNDkZvBpTXRIaOJ?si=e8268aa17dc44271"])
     sp.login()
-    player, status = testPlayer(sp)
 
 
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)
+    try:
+        player, status = testPlayer(sp)
+    except:
+        print("Using outdate spotAPI, run pip uninstall spotAPI, and then pip install git+https://github.com/TzurSoffer/SpotAPI/")
 
     artist = sp.artist("3Bd1cgCjtCI32PYvDC3ynO")
     save(artist, "artist.json")
