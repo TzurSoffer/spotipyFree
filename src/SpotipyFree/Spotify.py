@@ -232,21 +232,8 @@ class Spotify:
         if self.isUrl(artistId):
             artistId = self.urlToId(artistId)
 
-        try:
-            artist = spotapi.Artist().get_artist(artistId)["data"]["artistUnion"]
-            artist["name"] = artist["profile"]["name"]
-            artist["genres"] = [""]
-        except:
-            artist = {
-                "name": "Not Found",
-                "id": artistId,
-                "uri": f"spotify:artist:{artistId}",
-                "external_urls": {
-                    "spotify": f"https://open.spotify.com/artist/{artistId}"
-                },
-                "genres": [""],
-            }
-        return artist
+        artist = spotapi.Artist().get_artist(artistId)["data"]["artistUnion"]
+        return SpotifyFormatter.formatArtist(artist)
 
     def artist_albums(
         self, artistId, limit=-1, offset=0, include_groups="album", *args, **kwargs
@@ -621,6 +608,32 @@ if __name__ == "__main__":
         )
         return player, status
 
+    def testWebsocketReconnect(sp):
+        """
+        Force the PlayerStatus websocket to disconnect and verify that the
+        automatic reconnect logic works.
+        """
+        sp._createPlayerStatusIfNeeded()
+
+        print("Current connection ID:")
+        print(sp.playerStatus.connection_id)
+
+        print("\nClosing websocket...")
+        sp.playerStatus.ws.close()
+
+        # Give the reconnect logic time to run
+        time.sleep(5)
+
+        print("\nNew connection ID:")
+        print(sp.playerStatus.connection_id)
+
+        try:
+            state = sp.playerStatus.state
+            print("\nReconnect successful!")
+            print("Current track:", sp.current_playback())
+        except Exception as e:
+            print("\nReconnect failed:", e)
+
     sp = Spotify()
     # res = sp.audio_features(["https://open.spotify.com/track/4tyjNEHKos3lZPYAfTiMKH?si=b6fd0ef9ebca4a0c", "https://open.spotify.com/track/67Hna13dNDkZvBpTXRIaOJ?si=e8268aa17dc44271"])
     sp.login()
@@ -628,24 +641,25 @@ if __name__ == "__main__":
 
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)
-    try:
-        player, status = testPlayer(sp)
-    except:
-        print("Using outdate spotAPI, run pip uninstall spotAPI, and then pip install git+https://github.com/TzurSoffer/SpotAPI/")
+    # testWebsocketReconnect(sp)
+    # try:
+    #     player, status = testPlayer(sp)
+    # except:
+    #     print("Using outdate spotAPI, run pip uninstall spotAPI, and then pip install git+https://github.com/TzurSoffer/SpotAPI/")
 
     artist = sp.artist("3Bd1cgCjtCI32PYvDC3ynO")
     save(artist, "artist.json")
-    artistAlbums = sp.artist_albums("3Bd1cgCjtCI32PYvDC3ynO", include_groups="single")#include_groups="album,single,compilation")
-    save(artistAlbums, "artist_albums.json")
-    playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
-    save(playlist, "playlist.json")
-    track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
-    save(track, "track.json")
-    album = sp.album("4m2880jivSbbyEGAKfITCa")
-    save(album, "album.json")
-    albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
-    save(albumTracks, "album_tracks.json")
-    search = sp.search("Blinding Light - Weekend")
-    save(search, "search.json")
+    # artistAlbums = sp.artist_albums("3Bd1cgCjtCI32PYvDC3ynO", include_groups="single")#include_groups="album,single,compilation")
+    # save(artistAlbums, "artist_albums.json")
+    # playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
+    # save(playlist, "playlist.json")
+    # track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
+    # save(track, "track.json")
+    # album = sp.album("4m2880jivSbbyEGAKfITCa")
+    # save(album, "album.json")
+    # albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
+    # save(albumTracks, "album_tracks.json")
+    # search = sp.search("Blinding Light - Weekend")
+    # save(search, "search.json")
 
-    self = sp
+    # self = sp

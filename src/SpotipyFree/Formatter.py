@@ -74,22 +74,19 @@ class SpotifyFormatter:
 
     @staticmethod
     def formatArtist(artist):
-        if isinstance(artist, str):
+        if type(artist) != dict:
             return {
                 "name": "",
                 "id": "",
                 "uri": "",
                 "external_urls": {"spotify": ""},
+                "images": [],
                 "href": "",
                 "genres": [""],
             }
 
         name = ""
-        if isinstance(artist.get("profile"), dict):
-            name = artist.get("profile", {}).get("name", "")
-        else:
-            name = artist.get("name", "")
-
+        name = artist.get("profile", {}).get("name", "")
         uri = artist.get("uri", "")
         return {
             "name": name,
@@ -103,6 +100,7 @@ class SpotifyFormatter:
             "href": uri.replace(
                 "spotify:artist:", "https://api.spotify.com/v1/artists/"
             ),
+            "images": artist.get("visuals", {}).get("avatarImage", {}),
             "genres": artist.get("genres", [""]),
         }
 
