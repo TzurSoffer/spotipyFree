@@ -2,6 +2,7 @@ import time
 from spotapi.status import PlayerStatus
 import datetime
 import threading
+import traceback
 
 
 class LastPlayedManger:
@@ -35,12 +36,13 @@ class LastPlayedManger:
                 time.sleep(3)
             except Exception as e:
                 print(f"[SpotipyFree] Error in Recently Played: {e}")
+                traceback.print_exc()
                 time.sleep(10)
                 try:
                     self.manager.reconnect()
-                except:
+                except Exception as e:
                     print(f"[SpotipyFree] Listener stopped due to websocket disconnection. To reconnect, you must use run pip uninstall spotAPI and then pip install git+https://github.com/TzurSoffer/SpotAPI/")
-
+                    traceback.print_exc()
     def start(self, callback):
         self.run = True
         self.thread = threading.Thread(target=self.updateLoop, args=(callback,))
