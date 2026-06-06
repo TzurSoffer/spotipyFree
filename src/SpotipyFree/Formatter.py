@@ -100,7 +100,7 @@ class SpotifyFormatter:
             "href": uri.replace(
                 "spotify:artist:", "https://api.spotify.com/v1/artists/"
             ),
-            "images": artist.get("visuals", {}).get("avatarImage", {}),
+            "images": artist.get("visuals", {}).get("avatarImage", {}).get("sources", []),
             "genres": artist.get("genres", [""]),
         }
 

@@ -641,25 +641,25 @@ if __name__ == "__main__":
 
     if pysole:
         pysole.probe(runRemainingCode=True, printStartupCode=True)
-    # testWebsocketReconnect(sp)
-    # try:
-    #     player, status = testPlayer(sp)
-    # except:
-    #     print("Using outdate spotAPI, run pip uninstall spotAPI, and then pip install git+https://github.com/TzurSoffer/SpotAPI/")
+    testWebsocketReconnect(sp)
+    try:
+        player, status = testPlayer(sp)
+    except:
+        print("Using outdate spotAPI, run pip uninstall spotAPI, and then pip install git+https://github.com/TzurSoffer/SpotAPI/")
 
     artist = sp.artist("3Bd1cgCjtCI32PYvDC3ynO")
     save(artist, "artist.json")
-    # artistAlbums = sp.artist_albums("3Bd1cgCjtCI32PYvDC3ynO", include_groups="single")#include_groups="album,single,compilation")
-    # save(artistAlbums, "artist_albums.json")
-    # playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
-    # save(playlist, "playlist.json")
-    # track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
-    # save(track, "track.json")
-    # album = sp.album("4m2880jivSbbyEGAKfITCa")
-    # save(album, "album.json")
-    # albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
-    # save(albumTracks, "album_tracks.json")
-    # search = sp.search("Blinding Light - Weekend")
-    # save(search, "search.json")
+    artistAlbums = sp.artist_albums("3Bd1cgCjtCI32PYvDC3ynO", include_groups="single")#include_groups="album,single,compilation")
+    save(artistAlbums, "artist_albums.json")
+    playlist = sp.playlist_items("6lnfkAgnVtNzvj8KScLSkj")
+    save(playlist, "playlist.json")
+    track = sp.track("67Hna13dNDkZvBpTXRIaOJ")
+    save(track, "track.json")
+    album = sp.album("4m2880jivSbbyEGAKfITCa")
+    save(album, "album.json")
+    albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
+    save(albumTracks, "album_tracks.json")
+    search = sp.search("Blinding Light - Weekend")
+    save(search, "search.json")
 
-    # self = sp
+    self = sp
