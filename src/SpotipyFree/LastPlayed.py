@@ -39,7 +39,7 @@ class LastPlayedManger:
                 traceback.print_exc()
                 time.sleep(10)
                 try:
-                    self.manager.reconnect()
+                    self.manager.hard_reset()
                 except Exception as e:
                     print(f"[SpotipyFree] Listener stopped due to websocket disconnection. To reconnect, you must use run pip uninstall spotAPI and then pip install git+https://github.com/TzurSoffer/SpotAPI/")
                     traceback.print_exc()
