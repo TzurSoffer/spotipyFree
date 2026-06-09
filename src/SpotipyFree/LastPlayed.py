@@ -19,20 +19,21 @@ class LastPlayedManger:
     def updateLoop(self, callback):
         while self.run:
             try:
-                timestamp = int(self.manager.state.timestamp) / 1000
-                if self.lastPLayed != self.manager.state.track.uid:
+                state = self.manager.state  #< For some reason SpotAPI makes this property a function which when called often gets rate limited...
+                timestamp = int(state.timestamp) / 1000
+                if self.lastPLayed != state.track.uid:
                     if self.lastTrackUri != None:
                         timePlayed = max(0, int((time.time() - self.lastPlayedAt.timestamp()) * 1000))
                         callback(self.lastTrackUri, self.lastPlayedAtText, self.lastContextUri, timePlayed)
-                    self.lastTrackUri = self.manager.state.track.uri
+                    self.lastTrackUri = state.track.uri
                     self.lastPlayedAt = (
                         datetime.datetime.fromtimestamp(
                             timestamp, tz=datetime.timezone.utc
                         )
                     )
                     self.lastPlayedAtText = self.lastPlayedAt.isoformat().replace("+00:00", "Z")
-                    self.lastContextUri = self.manager.state.context_uri
-                    self.lastPLayed = self.manager.state.track.uid
+                    self.lastContextUri = state.context_uri
+                    self.lastPLayed = state.track.uid
                 time.sleep(3)
             except Exception as e:
                 print(f"[SpotipyFree] Error in Recently Played: {e}")
