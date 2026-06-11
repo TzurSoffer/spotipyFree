@@ -165,11 +165,11 @@ class Spotify:
             {"track": track, "played_at": playedAt, "ms_played": timePlayed, "context": context}
         )
 
-    def startRecentlyPlayedListener(self):
+    def startRecentlyPlayedListener(self, refreshInterval=3):
         self._loginIfNeeded()
         if not self.lastPlayedManager:
             self.lastPlayedManager = LastPlayedManger(self.user_auth)
-        self.lastPlayedManager.start(self._addToRecentlyPlayed)
+        self.lastPlayedManager.start(self._addToRecentlyPlayed, refreshInterval)
 
     def next(self, *args, **kwargs):
         return self._next(*args, **kwargs)
