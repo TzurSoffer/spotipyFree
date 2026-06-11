@@ -88,11 +88,10 @@ class SpotifyFormatter:
         name = ""
         name = artist.get("profile", {}).get("name", "")
         uri = artist.get("uri", "")
-        images = artist.get("visuals", None)    #< visuals could return None either way so we cant just do .get("visuals", {})
-        if images == None:
+        try:
+            images = artist.get("visuals", {}).get("avatarImage", {}).get("sources", [])
+        except:
             images = []
-        else:
-            images = images.get("avatarImage", {}).get("sources", [])
         return {
             "name": name,
             "id": uri.removeprefix("spotify:artist:"),
