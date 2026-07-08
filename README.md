@@ -100,3 +100,6 @@ print(f"Status: {response.status_code}")
 print(response.json())
 ```
 This project is in no way **affiliated with Spotify**.
+
+## LICENSE
+### This project is hosted under the MIT LICENSE. See the LICENSE file for more info
