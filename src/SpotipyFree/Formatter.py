@@ -1,3 +1,8 @@
+try:
+    from .Exceptions import SpotifyException
+except ImportError:
+    from Exceptions import SpotifyException
+
 class SpotifyFormatter:
     @staticmethod
     def formatPlaylistTrack(track):
@@ -136,6 +141,8 @@ class SpotifyFormatter:
 
     @staticmethod
     def formatPlaylist(playlist):
+        if "ownerV2" not in playlist:
+            raise SpotifyException("Playlist not available or not accessible, make sure it is public.")
         playlist["owner"] = playlist["ownerV2"]["data"]
         playlist.pop("ownerV2", None)
         playlist["owner"]["display_name"] = playlist["owner"]["name"]
