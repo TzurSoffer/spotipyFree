@@ -71,13 +71,13 @@ albumTracks = sp.album_tracks("4m2880jivSbbyEGAKfITCa")
 
 ## Usage with login
 ```python
+from SpotipyFree import Spotify
+
 sp = Spotify()
 sp.login()
 
-status = spotapi.player.PlayerStatus(sp.user_auth)
-sp.startRecentlyPlayedListener()
-state = status.state.__dict__
 saved = sp.current_user_saved_tracks()
+currentPlayback = sp.current_playback()
 me = sp.me()
 ```
 
