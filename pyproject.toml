@@ -9,7 +9,7 @@ authors = [{ name = "Tzur" }]
 dependencies = ["spotapi<2.0", "pymongo"]
 
 [build-system]
-requires = ["setuptools", "wheel"]
+requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.packages.find]
