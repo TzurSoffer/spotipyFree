@@ -75,7 +75,7 @@ profile = spotify.me()
 print("Signed in as:", profile["display_name"])
 
 playback = spotify.current_playback()
-print("Now playing:", playback["name"])
+print("Now playing:", playback["item"]["name"])
 print("Is playing:", playback["is_playing"])
 ```
 

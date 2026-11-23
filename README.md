@@ -107,7 +107,7 @@ for item in saved_tracks["items"]:
     print(track["name"], "-", ", ".join(a["name"] for a in track["artists"]))
 
 playback = spotify.current_playback()
-print("Now playing:", playback["name"])
+print("Now playing:", playback["item"]["name"])
 ```
 
 ### Control playback
