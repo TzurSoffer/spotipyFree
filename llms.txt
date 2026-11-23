@@ -1,0 +1,27 @@
+# SpotipyFree
+
+> Python library with a Spotipy-style interface for Spotify catalog, account,
+> and playback operations.
+
+SpotipyFree supports track search; track, album, artist, and playlist lookups;
+authenticated account and playback features; recently played collection; and
+an optional local Flask interface. SpotipyFree is independent and is not
+affiliated with Spotify.
+
+## Documentation
+
+- [Documentation home](https://spotipyfree.readthedocs.io/)
+- [Overview](https://spotipyfree.readthedocs.io/en/latest/overview.html)
+- [Installation](https://spotipyfree.readthedocs.io/en/latest/installation.html)
+- [Quick start](https://spotipyfree.readthedocs.io/en/latest/quickstart.html)
+- [Usage guide](https://spotipyfree.readthedocs.io/en/latest/usage.html)
+- [Authentication and session data](https://spotipyfree.readthedocs.io/en/latest/authentication.html)
+- [Supported methods](https://spotipyfree.readthedocs.io/en/latest/api-reference.html)
+- [Optional local web API](https://spotipyfree.readthedocs.io/en/latest/web-api.html)
+- [Troubleshooting](https://spotipyfree.readthedocs.io/en/latest/troubleshooting.html)
+- [Legal and safety](https://spotipyfree.readthedocs.io/en/latest/legal-and-safety.html)
+
+## Project resources
+
+- [GitHub repository](https://github.com/TzurSoffer/spotipyFree)
+- [PyPI package](https://pypi.org/project/spotipyFree/)

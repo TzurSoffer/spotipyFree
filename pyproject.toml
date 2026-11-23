@@ -1,6 +1,6 @@
 [project]
 name = "spotipyFree"
-version = "1.9.14"
+version = "1.9.15"
 description = "A Spotipy-compatible wrapper using SpotAPI"
 readme = "README.md"
 requires-python = ">=3.9"
@@ -11,6 +11,9 @@ dependencies = ["spotapi<2.0", "pymongo"]
 [build-system]
 requires = ["setuptools>=70.1"]
 build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+py-modules = ["spotipyfree"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
