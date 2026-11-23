@@ -1,7 +1,7 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dw/spotipyfree) ![Downloads](https://static.pepy.tech/badge/spotipyfree) [![Documentation](https://img.shields.io/badge/docs-read%20the%20docs-blue)](https://spotipyfree.readthedocs.io/)
 # SpotipyFree
 
-A lightweight **drop-in replacement for Spotipy** without using the spotify api. This project was build because spotify removed access to its API for non-premium users. This project doesn't use ANY Spotify APIs. 
+A lightweight **drop-in replacement for Spotipy** without using the spotify api. This project was built because spotify removed access to its API for non-premium users. This project doesn't use ANY Spotify APIs.
 - - -
 
 ## Features
