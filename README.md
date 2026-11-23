@@ -4,6 +4,8 @@
 A lightweight **drop-in replacement for Spotipy** without using the spotify api. This project was built because spotify removed access to its API for non-premium users. This project doesn't use ANY Spotify APIs.
 - - -
 
+### If you found [this repository](https://github.com/TzurSoffer/spotipyFree) useful, please give it a ⭐!.
+
 ## Features
 
 - Search the catalog and retrieve track, album, artist, and playlist data.
