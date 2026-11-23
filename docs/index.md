@@ -1,3 +1,9 @@
+---
+myst:
+  html_meta:
+    "google-site-verification": "bsrQ_uVaW7WhnJXlhLcYVjeN6p1p8-ELpnn8dKMbA2c"
+---
+
 # SpotipyFree documentation
 
 SpotipyFree is a Python package with a Spotipy-style interface for Spotify
