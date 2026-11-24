@@ -1,7 +1,7 @@
 # What is SpotipyFree?
 
 SpotipyFree is a Python library that makes Spotify catalog, account, and
-playback features available through a familiar Spotipy-style interface.
+playback features available through a familiar Spotipy-style interface. It was built because spotify removed access to its API for non-premium users. It aims to make the spotify api as easy and frictionless to use. Migration from spotipy is super straightforward, in most cases only requiring you to change the import name. The project also aims to provide a straightforward user experience for new users trying to get started.
 
 ## What it does
 
