@@ -1,7 +1,7 @@
 ![PyPI - Downloads](https://img.shields.io/pypi/dw/spotipyfree) ![Downloads](https://static.pepy.tech/badge/spotipyfree) [![Documentation](https://img.shields.io/badge/docs-read%20the%20docs-blue)](https://spotipyfree.readthedocs.io/)
 # SpotipyFree
 
-A lightweight **drop-in replacement for Spotipy** without using the spotify api. This project was built because spotify removed access to its API for non-premium users. This project doesn't use ANY Spotify APIs.
+A lightweight **drop-in replacement for Spotipy** without using the spotify api. This project was built because spotify removed access to its API for non-premium users. It aims to make the spotify api as easy and frictionless to use. Migration from spotipy is super straightforward, in most cases only requiring you to change the import name. The project also aims to provide a straightforward user experience for new users trying to get started.
 - - -
 
 ### If you found [this repository](https://github.com/TzurSoffer/spotipyFree) useful, please give it a ⭐!.
